@@ -80,13 +80,20 @@ class NhkNewsEasy extends ConsumerWidget {
               scrolledUnderElevation: 1,
               backgroundColor: lightColorScheme.surface,
               foregroundColor: lightColorScheme.onSurface,
+              centerTitle: false,
             ),
             cardTheme: CardThemeData(
-              elevation: 1,
-              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              elevation: 0.5,
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             listTileTheme: ListTileThemeData(
               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           darkTheme: ThemeData(
@@ -97,13 +104,20 @@ class NhkNewsEasy extends ConsumerWidget {
               scrolledUnderElevation: 1,
               backgroundColor: darkColorScheme.surface,
               foregroundColor: darkColorScheme.onSurface,
+              centerTitle: false,
             ),
             cardTheme: CardThemeData(
-              elevation: 1,
-              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              elevation: 0.5,
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             listTileTheme: ListTileThemeData(
               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           home: SplashScreen(),

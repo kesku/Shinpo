@@ -5,9 +5,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shinpo/error_reporter.dart';
 import 'package:shinpo/providers/theme_provider.dart';
 import 'package:shinpo/providers/cache_manager_provider.dart';
-import 'package:shinpo/widget/font_size_dialog.dart';
+import 'package:shinpo/providers/font_size_provider.dart';
+import 'package:shinpo/providers/furigana_provider.dart';
 import 'package:shinpo/widget/reading_history_screen.dart';
-import 'package:settings_ui/settings_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Settings extends ConsumerStatefulWidget {
@@ -33,145 +33,178 @@ class _SettingsState extends ConsumerState<Settings> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final themeNotifier = ref.read(themeModeProvider.notifier);
+    final themeMode = ref.watch(themeModeProvider);
+    final fontSize = ref.watch(fontSizeProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Settings'),
-      ),
-      body: SettingsList(
-        sections: [
-          SettingsSection(
-            title: Text('Appearance'),
-            tiles: [
-              SettingsTile.navigation(
-                title: Text('Theme'),
-                value: Text(themeNotifier.currentThemeName),
-                leading: Icon(Icons.palette_outlined),
-                onPressed: (context) => _showThemeDialog(context, ref),
-              ),
-            ],
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            title: const Text('Settings'),
+            pinned: true,
           ),
-          SettingsSection(
-            title: Text('Reading'),
-            tiles: [
-              SettingsTile.navigation(
-                title: Text('Text Size'),
-                description: Text('Adjust font size for better reading'),
-                leading: Icon(Icons.text_fields),
-                onPressed: (context) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => const FontSizeDialog(),
-                  );
-                },
-              ),
-              SettingsTile.navigation(
-                title: Text('Reading History'),
-                description: Text('View your reading progress'),
-                leading: Icon(Icons.history),
-                onPressed: (context) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const ReadingHistoryScreen(),
+          SliverToBoxAdapter(
+            child: _Section(
+              title: 'Appearance',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SectionHeader(icon: Icons.palette_outlined, label: 'Theme'),
+                  const SizedBox(height: 8),
+                  SegmentedButton<ThemeMode>(
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(
+                          value: ThemeMode.system,
+                          label: Text('System'),
+                          icon: Icon(Icons.phone_iphone)),
+                      ButtonSegment(
+                          value: ThemeMode.light,
+                          label: Text('Light'),
+                          icon: Icon(Icons.light_mode_outlined)),
+                      ButtonSegment(
+                          value: ThemeMode.dark,
+                          label: Text('Dark'),
+                          icon: Icon(Icons.dark_mode_outlined)),
+                    ],
+                    style: ButtonStyle(
+                      visualDensity: VisualDensity.compact,
                     ),
-                  );
-                },
-              ),
-            ],
-          ),
-          SettingsSection(
-            title: Text('Cache & Storage'),
-            tiles: [
-              SettingsTile.navigation(
-                title: Text('Cache Status'),
-                description: Text('View cache information'),
-                leading: Icon(Icons.info_outline),
-                onPressed: (context) => _showCacheStatus(context, ref),
-              ),
-              SettingsTile.navigation(
-                title: Text('Refresh Cache'),
-                description: Text('Download latest articles'),
-                leading: Icon(Icons.sync),
-                onPressed: (context) => _refreshCache(context, ref),
-              ),
-              SettingsTile.navigation(
-                title: Text('Optimize Cache'),
-                description: Text('Clean up and validate cache'),
-                leading: Icon(Icons.cleaning_services_outlined),
-                onPressed: (context) => _optimizeCache(context, ref),
-              ),
-              SettingsTile.navigation(
-                title: Text(
-                  'Clear Cache',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontWeight: FontWeight.w600,
+                    selected: {themeMode},
+                    onSelectionChanged: (selection) {
+                      final mode = selection.first;
+                      themeNotifier.setThemeMode(mode);
+                    },
                   ),
-                ),
-                description: Text('Free up storage space'),
-                leading: Icon(Icons.delete_outline,
-                    color: Theme.of(context).colorScheme.error),
-                onPressed: _clearCache,
+                ],
               ),
-            ],
+            ),
           ),
-          SettingsSection(
-            title: Text('About'),
-            tiles: [
-              SettingsTile.navigation(
-                title: Text('Privacy Policy'),
-                leading: Icon(Icons.description_outlined),
-                onPressed: _openPrivacyPolicy,
+          SliverToBoxAdapter(
+            child: _Section(
+              title: 'Reading',
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.text_fields),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    trailing: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 320),
+                      child: SegmentedButton<FontSizeLevel>(
+                        showSelectedIcon: false,
+                        segments: const [
+                          ButtonSegment(
+                              value: FontSizeLevel.small, label: Text('S')),
+                          ButtonSegment(
+                              value: FontSizeLevel.normal, label: Text('M')),
+                          ButtonSegment(
+                              value: FontSizeLevel.large, label: Text('L')),
+                          ButtonSegment(
+                              value: FontSizeLevel.extraLarge,
+                              label: Text('XL')),
+                        ],
+                        selected: {fontSize},
+                        onSelectionChanged: (selection) {
+                          ref
+                              .read(fontSizeProvider.notifier)
+                              .setFontSize(selection.first);
+                        },
+                      ),
+                    ),
+                  ),
+                  SwitchListTile.adaptive(
+                    value: ref.watch(furiganaProvider),
+                    onChanged: (_) =>
+                        ref.read(furiganaProvider.notifier).toggle(),
+                    secondary: const Icon(Icons.translate_outlined),
+                    title: const Text('Show Furigana'),
+                    subtitle:
+                        const Text('Display pronunciation guides above kanji'),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  _TileButton(
+                    icon: Icons.history,
+                    title: 'Reading History',
+                    subtitle: 'View your reading progress',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ReadingHistoryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-              SettingsTile(
-                title: Text('Version'),
-                value: Text(
-                  _packageInfo != null
-                      ? '${_packageInfo!.version}+${_packageInfo!.buildNumber}'
-                      : 'Loading...',
-                ),
-                leading: Icon(Icons.info_outline),
-              ),
-            ],
+            ),
           ),
+          SliverToBoxAdapter(
+            child: _Section(
+              title: 'Cache & Storage',
+              child: Column(
+                children: [
+                  _TileButton(
+                    icon: Icons.info_outline,
+                    title: 'Cache Status',
+                    subtitle: 'View cache information',
+                    onTap: () => _showCacheStatus(context, ref),
+                  ),
+                  _TileButton(
+                    icon: Icons.sync,
+                    title: 'Refresh Cache',
+                    subtitle: 'Download latest articles',
+                    onTap: () => _refreshCache(context, ref),
+                  ),
+                  _TileButton(
+                    icon: Icons.cleaning_services_outlined,
+                    title: 'Optimize Cache',
+                    subtitle: 'Clean up and validate cache',
+                    onTap: () => _optimizeCache(context, ref),
+                  ),
+                  ListTile(
+                    leading:
+                        Icon(Icons.delete_outline, color: colorScheme.error),
+                    title: Text('Clear Cache',
+                        style: TextStyle(
+                          color: colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        )),
+                    subtitle: const Text('Free up storage space'),
+                    onTap: () => _clearCache(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _Section(
+              title: 'About',
+              child: Column(
+                children: [
+                  _TileButton(
+                    icon: Icons.description_outlined,
+                    title: 'Privacy Policy',
+                    onTap: () => _openPrivacyPolicy(context),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: const Text('Version'),
+                    subtitle: Text(
+                      _packageInfo != null
+                          ? '${_packageInfo!.version}+${_packageInfo!.buildNumber}'
+                          : 'Loading...',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
-      ),
-    );
-  }
-
-  void _showThemeDialog(BuildContext context, WidgetRef ref) {
-    final themeNotifier = ref.read(themeModeProvider.notifier);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Choose Theme'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ThemeMode.values.map((mode) {
-            final title = mode == ThemeMode.light
-                ? 'Light'
-                : mode == ThemeMode.dark
-                    ? 'Dark'
-                    : 'System';
-
-            return RadioListTile<ThemeMode>(
-              title: Text(title),
-              subtitle: mode == ThemeMode.system
-                  ? Text('Follow system setting')
-                  : null,
-              value: mode,
-              groupValue: ref.watch(themeModeProvider),
-              onChanged: (value) {
-                if (value != null) {
-                  themeNotifier.setThemeMode(value);
-                  Navigator.of(context).pop();
-                }
-              },
-            );
-          }).toList(),
-        ),
       ),
     );
   }
@@ -184,16 +217,15 @@ class _SettingsState extends ConsumerState<Settings> {
       ),
       onPressed: () async {
         Navigator.pop(context);
-        
+
         try {
           final cacheManager = ref.read(cacheManagerServiceProvider);
           await cacheManager.clearAllCache();
-          
-          
+
           ref.invalidate(cachedNewsProvider);
           ref.invalidate(cacheStatusProvider);
           ref.invalidate(cacheInitializationProvider);
-          
+
           Fluttertoast.showToast(
               msg: 'Cache removed', gravity: ToastGravity.CENTER);
         } catch (error, stackTrace) {
@@ -224,8 +256,7 @@ class _SettingsState extends ConsumerState<Settings> {
   }
 
   void _openPrivacyPolicy(BuildContext context) async {
-    final url =
-        'https://github.com/kesku/Shinpo/blob/master/privacy_policy.md';
+    final url = 'https://github.com/kesku/Shinpo/blob/master/privacy_policy.md';
     final uri = Uri.parse(url);
 
     try {
@@ -275,14 +306,14 @@ class _SettingsState extends ConsumerState<Settings> {
               _buildStatusRow(
                   'Cache Size', cacheStatus['cacheSize'].toString()),
               SizedBox(height: 8),
-              _buildStatusRow(
-                  'Cache Valid', cacheStatus['isValid'].toString()),
+              _buildStatusRow('Cache Valid', cacheStatus['isValid'].toString()),
               SizedBox(height: 8),
               if (cacheStatus['hitRate'] != null)
-                _buildStatusRow(
-                    'Cache Hit Rate', '${cacheStatus['hitRate'].toStringAsFixed(1)}%'),
+                _buildStatusRow('Cache Hit Rate',
+                    '${cacheStatus['hitRate'].toStringAsFixed(1)}%'),
               SizedBox(height: 8),
-              if (cacheStatus['totalRequests'] != null && cacheStatus['totalRequests'] > 0)
+              if (cacheStatus['totalRequests'] != null &&
+                  cacheStatus['totalRequests'] > 0)
                 _buildStatusRow(
                     'Total Requests', cacheStatus['totalRequests'].toString()),
               SizedBox(height: 8),
@@ -297,20 +328,24 @@ class _SettingsState extends ConsumerState<Settings> {
                     'Cache Age', '${cacheStatus['ageInDays']} days'),
               SizedBox(height: 8),
               if (cacheStatus['oldestDate'] != null)
-                _buildStatusRow(
-                    'Oldest Article',
+                _buildStatusRow('Oldest Article',
                     _formatDateTime(cacheStatus['oldestDate'])),
               SizedBox(height: 8),
               if (cacheStatus['newestDate'] != null)
-                _buildStatusRow(
-                    'Newest Article',
+                _buildStatusRow('Newest Article',
                     _formatDateTime(cacheStatus['newestDate'])),
               SizedBox(height: 8),
-              _buildStatusRow('Internet Connection',
-                  cacheStatus['hasInternetConnection'] ? 'Available' : 'Offline'),
+              _buildStatusRow(
+                  'Internet Connection',
+                  cacheStatus['hasInternetConnection']
+                      ? 'Available'
+                      : 'Offline'),
               SizedBox(height: 8),
-              _buildStatusRow('NHK Server',
-                  cacheStatus['nhkServerReachable'] ? 'Reachable' : 'Unreachable'),
+              _buildStatusRow(
+                  'NHK Server',
+                  cacheStatus['nhkServerReachable']
+                      ? 'Reachable'
+                      : 'Unreachable'),
             ],
           ),
         ),
@@ -448,5 +483,91 @@ class _SettingsState extends ConsumerState<Settings> {
         ),
       );
     }
+  }
+}
+
+class _Section extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _Section({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _SectionHeader({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+}
+
+class _TileButton extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onTap;
+
+  const _TileButton({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: subtitle != null ? Text(subtitle!) : null,
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+    );
   }
 }
