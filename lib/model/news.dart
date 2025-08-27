@@ -25,19 +25,16 @@ class News {
     news.body = json['body'];
     news.imageUrl = json['imageUrl'];
     news.publishedAtUtc = json['publishedAtUtc'];
-    
-    
+
     try {
       final date = DateTime.parse(news.publishedAtUtc);
       news.publishedAtEpoch = date.millisecondsSinceEpoch;
     } catch (e) {
       print('News.fromJson: Invalid date format: ${news.publishedAtUtc}');
-      
-      final now = DateTime.now().toUtc();
-      news.publishedAtUtc = now.toIso8601String();
-      news.publishedAtEpoch = now.millisecondsSinceEpoch;
+
+      news.publishedAtEpoch = 0;
     }
-    
+
     news.m3u8Url = json['m3u8Url'];
 
     return news;
@@ -56,13 +53,12 @@ class News {
     };
   }
 
-  
   bool isValid() {
-    return newsId.isNotEmpty && 
-           title.isNotEmpty && 
-           publishedAtUtc.isNotEmpty &&
-           publishedAtEpoch > 0 &&
-           _isValidDateString(publishedAtUtc);
+    return newsId.isNotEmpty &&
+        title.isNotEmpty &&
+        publishedAtUtc.isNotEmpty &&
+        publishedAtEpoch > 0 &&
+        _isValidDateString(publishedAtUtc);
   }
 
   bool _isValidDateString(String dateString) {
@@ -71,7 +67,7 @@ class News {
       final now = DateTime.now().toUtc();
       final minDate = DateTime(2020, 1, 1);
       final maxDate = now.add(Duration(days: 365));
-      
+
       return date.isAfter(minDate) && date.isBefore(maxDate);
     } catch (e) {
       return false;

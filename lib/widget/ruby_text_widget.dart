@@ -42,7 +42,7 @@ class RubyTextWidget extends StatelessWidget {
     for (final match in matches) {
       if (match.start > lastIndex) {
         final beforeText = text.substring(lastIndex, match.start);
-        if (beforeText.trim().isNotEmpty) {
+        if (beforeText.isNotEmpty) {
           spans.add(TextSpan(
             text: beforeText,
             style: defaultStyle,
@@ -78,7 +78,7 @@ class RubyTextWidget extends StatelessWidget {
 
     if (lastIndex < text.length) {
       final afterText = text.substring(lastIndex);
-      if (afterText.trim().isNotEmpty) {
+      if (afterText.isNotEmpty) {
         spans.add(TextSpan(
           text: afterText,
           style: defaultStyle,

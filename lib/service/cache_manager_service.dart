@@ -93,7 +93,7 @@ class CacheManagerService {
 
   Future<List<News>> loadAllCachedNews() async {
     final all = await _newsRepository.getAllNews();
-    all.sort((a, b) => -a.publishedAtUtc.compareTo(b.publishedAtUtc));
+    all.sort((a, b) => b.publishedAtEpoch.compareTo(a.publishedAtEpoch));
     return all;
   }
 

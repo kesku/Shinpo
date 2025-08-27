@@ -27,7 +27,7 @@ class CachedNewsService {
       try {
         final news = await _newsRepository.getNews(startDate, endDate);
 
-        news.sort((a, b) => -a.publishedAtUtc.compareTo(b.publishedAtUtc));
+        news.sort((a, b) => b.publishedAtEpoch.compareTo(a.publishedAtEpoch));
 
         return news;
       } catch (error, stackTrace) {

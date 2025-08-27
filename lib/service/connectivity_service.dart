@@ -1,6 +1,9 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shinpo/config/api_config.dart';
 import 'package:shinpo/util/date_formatter.dart';
+import 'package:shinpo/service/http_service.dart';
 
 class ConnectivityService {
   static const List<String> _testUrls = [
@@ -13,12 +16,11 @@ class ConnectivityService {
     for (final url in _testUrls) {
       try {
         final uri = Uri.parse(url);
-        final response =
-            await http.head(uri).timeout(const Duration(seconds: 3));
+        final response = await HttpService.head(uri, timeout: const Duration(seconds: 3));
         if (response.statusCode >= 200 && response.statusCode < 400) {
           return true;
         }
-      } catch (e) {
+      } catch (_) {
         continue;
       }
     }
@@ -32,13 +34,17 @@ class ConnectivityService {
         startDate: formatDateForApi(now.subtract(const Duration(days: 1))),
         endDate: formatDateForApi(now),
       );
-      final response = await http.get(uri).timeout(const Duration(seconds: 5));
+      final response = await HttpService.get(uri, timeout: const Duration(seconds: 5));
 
       if (response.statusCode >= 200 && response.statusCode < 400) {
         return true;
       }
       return false;
-    } catch (e) {
+    } on SocketException catch (_) {
+      return false;
+    } on TimeoutException catch (_) {
+      return false;
+    } on http.ClientException catch (_) {
       return false;
     }
   }

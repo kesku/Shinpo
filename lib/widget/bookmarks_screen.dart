@@ -54,7 +54,7 @@ class BookmarksScreenState extends ConsumerState<BookmarksScreen> {
           .toList();
 
       bookmarkedNews.sort(
-        (a, b) => -a.publishedAtUtc.compareTo(b.publishedAtUtc),
+        (a, b) => b.publishedAtEpoch.compareTo(a.publishedAtEpoch),
       );
 
       setState(() {

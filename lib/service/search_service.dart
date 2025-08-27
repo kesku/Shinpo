@@ -37,9 +37,7 @@ class SearchService {
         if (aStartsWith && !bStartsWith) return -1;
         if (!aStartsWith && bStartsWith) return 1;
 
-        return DateTime.parse(
-          b.publishedAtUtc,
-        ).compareTo(DateTime.parse(a.publishedAtUtc));
+        return b.publishedAtEpoch.compareTo(a.publishedAtEpoch);
       });
 
       return filteredNews;
@@ -79,9 +77,7 @@ class SearchService {
         if (aExactTitle && !bExactTitle) return -1;
         if (!aExactTitle && bExactTitle) return 1;
 
-        return DateTime.parse(
-          b.publishedAtUtc,
-        ).compareTo(DateTime.parse(a.publishedAtUtc));
+        return b.publishedAtEpoch.compareTo(a.publishedAtEpoch);
       });
 
       return filteredNews;

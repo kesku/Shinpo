@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:shinpo/model/news.dart';
 import 'package:shinpo/config/api_config.dart';
 import 'package:shinpo/util/date_formatter.dart';
+import 'package:shinpo/service/http_service.dart';
 
 class NewsService {
   Future<List<News>> fetchNewsList(DateTime startDate, DateTime endDate) async {
@@ -21,7 +24,7 @@ class NewsService {
     );
 
     try {
-      final response = await http.get(uri);
+      final response = await HttpService.get(uri, timeout: const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
         final decoder = Utf8Decoder();
@@ -31,7 +34,7 @@ class NewsService {
           json.decode(responseBody),
         ).map((news) => News.fromJson(news)).toList();
 
-        newsList.sort((a, b) => -a.publishedAtUtc.compareTo(b.publishedAtUtc));
+        newsList.sort((a, b) => b.publishedAtEpoch.compareTo(a.publishedAtEpoch));
 
         return newsList;
       } else {
@@ -48,14 +51,14 @@ class NewsService {
           throw Exception('Failed to fetch news: HTTP ${response.statusCode}');
         }
       }
+    } on SocketException catch (_) {
+      throw Exception('Network connection failed. Please check your internet connection.');
+    } on TimeoutException catch (_) {
+      throw Exception('Network connection failed. Please check your internet connection.');
+    } on http.ClientException catch (e) {
+      throw Exception('Request error: ${e.message}');
     } catch (e) {
-      if (e.toString().contains('SocketException') ||
-          e.toString().contains('TimeoutException')) {
-        throw Exception(
-            'Network connection failed. Please check your internet connection.');
-      } else {
-        throw Exception('Failed to fetch news: $e');
-      }
+      throw Exception('Failed to fetch news: $e');
     }
   }
 
