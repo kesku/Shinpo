@@ -51,10 +51,6 @@ class RubyTextWidget extends StatelessWidget {
       }
 
       final baseText = match.group(1) ?? '';
-      spans.add(TextSpan(
-        text: baseText,
-        style: defaultStyle,
-      ));
 
       final rubyText = match.group(2) ?? '';
       spans.add(WidgetSpan(

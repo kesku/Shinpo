@@ -105,10 +105,12 @@ class SearchService {
 
         if (title.contains(query)) {
           final index = title.indexOf(query);
-          final suggestion = news.title.substring(
-            index,
-            index + query.length + 20,
-          );
+          final start = index;
+          final unclampedEnd = index + query.length + 20;
+          final end = unclampedEnd > news.title.length
+              ? news.title.length
+              : unclampedEnd;
+          final suggestion = news.title.substring(start, end);
           if (suggestion.length > query.length) {
             suggestions.add(suggestion);
           }
