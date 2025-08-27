@@ -220,15 +220,15 @@ class NewsListState extends ConsumerState<NewsList> {
             Text(
               'No articles yet',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
             SizedBox(height: 8),
             Text(
               'Pull down to refresh',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),
@@ -310,7 +310,9 @@ class NewsListState extends ConsumerState<NewsList> {
                           Expanded(
                             child: RubyTextWidget(
                               text: news.titleWithRuby,
-                              style: Theme.of(context).textTheme.titleMedium
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     height: 1.3,
@@ -343,12 +345,12 @@ class NewsListState extends ConsumerState<NewsList> {
                           SizedBox(width: 4),
                           Text(
                             '$formattedDate $formattedTime',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
                           ),
                           Spacer(),
                           if (news.m3u8Url.isNotEmpty)
@@ -412,9 +414,9 @@ class NewsListState extends ConsumerState<NewsList> {
 
       DateTime newestDate = latestNews == null
           ? (config != null
-                    ? DateTime.parse(config.newsFetchedEndUtc)
-                    : DateTime.now().toUtc())
-                .subtract(Duration(days: _newsFetchIntervalDays))
+                  ? DateTime.parse(config.newsFetchedEndUtc)
+                  : DateTime.now().toUtc())
+              .subtract(Duration(days: _newsFetchIntervalDays))
           : DateTime.parse(latestNews.publishedAtUtc).add(Duration(days: 1));
 
       DateTime startDate = DateTime.utc(
@@ -507,45 +509,38 @@ class NewsListState extends ConsumerState<NewsList> {
 
   void _forceCacheRefresh() async {
     try {
-      
-      ref.read(cachedNewsProvider.notifier).state = const AsyncValue.loading();
-      
-      
       await ref.read(cachedNewsProvider.notifier).refreshCache();
-      
-      
+
       Fluttertoast.showToast(
         msg: 'Cache refreshed successfully',
         gravity: ToastGravity.CENTER,
       );
     } catch (error) {
-      
       final errorString = error.toString();
       String message = 'Failed to refresh cache';
-      
-      if (errorString.contains('Server temporarily unavailable') || 
+
+      if (errorString.contains('Server temporarily unavailable') ||
           errorString.contains('Server error') ||
           errorString.contains('HTTP 500')) {
         message = 'Server is temporarily unavailable. Using cached data.';
       } else if (errorString.contains('Network connection failed') ||
-                 errorString.contains('SocketException') ||
-                 errorString.contains('TimeoutException')) {
+          errorString.contains('SocketException') ||
+          errorString.contains('TimeoutException')) {
         message = 'Network connection failed. Using cached data.';
       }
-      
+
       Fluttertoast.showToast(
         msg: message,
         gravity: ToastGravity.CENTER,
       );
-      
-      
+
       await ref.read(cachedNewsProvider.notifier).loadAllCachedNews();
     }
   }
 
   String _getErrorMessage(dynamic error) {
     final errorString = error.toString();
-    
+
     if (errorString.contains('Server temporarily unavailable')) {
       return 'The news server is temporarily unavailable.\nPlease try again later.';
     } else if (errorString.contains('Server error')) {

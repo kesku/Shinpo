@@ -11,33 +11,36 @@ class ConnectivityService {
     for (final url in _testUrls) {
       try {
         final uri = Uri.parse(url);
-        final response = await http.head(uri).timeout(const Duration(seconds: 3));
+        final response =
+            await http.head(uri).timeout(const Duration(seconds: 3));
         if (response.statusCode >= 200 && response.statusCode < 400) {
-          return true; 
+          return true;
         }
       } catch (e) {
-        
         continue;
       }
     }
-    return false; 
+    return false;
   }
 
   static Future<bool> isNhkServerReachable() async {
     try {
       final uri = Uri(
-        scheme: 'https', 
-        host: 'nhk.dekiru.app', 
+        scheme: 'https',
+        host: 'nhk.dekiru.app',
         path: '/news',
         queryParameters: {
-          'startDate': DateTime.now().subtract(Duration(days: 1)).toIso8601String(),
+          'startDate':
+              DateTime.now().subtract(Duration(days: 1)).toIso8601String(),
           'endDate': DateTime.now().toIso8601String(),
         },
       );
       final response = await http.get(uri).timeout(const Duration(seconds: 5));
-      
-      
-      return true;
+
+      if (response.statusCode >= 200 && response.statusCode < 400) {
+        return true;
+      }
+      return false;
     } catch (e) {
       return false;
     }
@@ -46,7 +49,7 @@ class ConnectivityService {
   static Future<Map<String, bool>> getConnectivityStatus() async {
     final hasInternet = await hasInternetConnection();
     final nhkReachable = hasInternet ? await isNhkServerReachable() : false;
-    
+
     return {
       'hasInternet': hasInternet,
       'nhkServerReachable': nhkReachable,
