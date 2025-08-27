@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:nhk_easy/error_reporter.dart';
-import 'package:nhk_easy/repository/base_repository.dart';
+import 'package:shinpo/error_reporter.dart';
+import 'package:shinpo/providers/theme_provider.dart';
+import 'package:shinpo/providers/cache_manager_provider.dart';
+import 'package:shinpo/repository/base_repository.dart';
+import 'package:shinpo/widget/font_size_dialog.dart';
+import 'package:shinpo/widget/reading_history_screen.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class Settings extends StatelessWidget {
+class Settings extends ConsumerWidget {
   final _baseRepository = BaseRepository();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeNotifier = ref.read(themeModeProvider.notifier);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Settings'),
@@ -17,21 +24,119 @@ class Settings extends StatelessWidget {
       body: SettingsList(
         sections: [
           SettingsSection(
-            title: Text('Misc'),
+            title: Text('Appearance'),
             tiles: [
               SettingsTile(
+                title: Text('Theme'),
+                description: Text('Current: ${themeNotifier.currentThemeName}'),
+                leading: Icon(Icons.palette_outlined),
+                onPressed: (context) => _showThemeDialog(context, ref),
+              ),
+            ],
+          ),
+          SettingsSection(
+            title: Text('Reading'),
+            tiles: [
+              SettingsTile(
+                title: Text('Text Size'),
+                description: Text('Adjust font size for better reading'),
+                leading: Icon(Icons.text_fields),
+                onPressed: (context) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const FontSizeDialog(),
+                  );
+                },
+              ),
+              SettingsTile(
+                title: Text('Reading History'),
+                description: Text('View your reading progress'),
+                leading: Icon(Icons.history),
+                onPressed: (context) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ReadingHistoryScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          SettingsSection(
+            title: Text('Cache & Storage'),
+            tiles: [
+              SettingsTile(
+                title: Text('Cache Status'),
+                description: Text('View cache information'),
+                leading: Icon(Icons.info_outline),
+                onPressed: (context) => _showCacheStatus(context, ref),
+              ),
+              SettingsTile(
+                title: Text('Refresh Cache'),
+                description: Text('Download latest articles'),
+                leading: Icon(Icons.refresh),
+                onPressed: (context) => _refreshCache(context, ref),
+              ),
+              SettingsTile(
                 title: Text('Clear Cache'),
+                description: Text('Free up storage space'),
                 leading: Icon(Icons.storage),
                 onPressed: _clearCache,
               ),
+            ],
+          ),
+          SettingsSection(
+            title: Text('About'),
+            tiles: [
               SettingsTile(
                 title: Text('Privacy Policy'),
                 leading: Icon(Icons.description),
                 onPressed: _openPrivacyPolicy,
-              )
+              ),
+              SettingsTile(
+                title: Text('Version'),
+                description: Text('1.6.0+1'),
+                leading: Icon(Icons.info_outline),
+              ),
             ],
-          )
+          ),
         ],
+      ),
+    );
+  }
+
+  void _showThemeDialog(BuildContext context, WidgetRef ref) {
+    final themeNotifier = ref.read(themeModeProvider.notifier);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Choose Theme'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: ThemeMode.values.map((mode) {
+            final title = mode == ThemeMode.light
+                ? 'Light'
+                : mode == ThemeMode.dark
+                    ? 'Dark'
+                    : 'System';
+
+            return RadioListTile<ThemeMode>(
+              title: Text(title),
+              subtitle: mode == ThemeMode.system
+                  ? Text('Follow system setting')
+                  : null,
+              value: mode,
+              groupValue: ref.watch(themeModeProvider),
+              onChanged: (value) {
+                if (value != null) {
+                  themeNotifier.setThemeMode(value);
+                  Navigator.of(context).pop();
+                }
+              },
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -65,8 +170,7 @@ class Settings extends StatelessWidget {
       },
     );
     final alertDialog = AlertDialog(
-      content: Text(
-          'Are you sure to clear cached data?'),
+      content: Text('Are you sure to clear cached data?'),
       actions: <Widget>[yesButton, noButton],
     );
 
@@ -79,8 +183,10 @@ class Settings extends StatelessWidget {
   }
 
   void _openPrivacyPolicy(BuildContext context) async {
-    final url = 'https://github.com/nhk-news-web-easy/nhk-easy-mobile-privacy-policy';
-    final uri = Uri.https('github.com', '/nhk-news-web-easy/nhk-easy-mobile-privacy-policy');
+    final url =
+        'https://github.com/nhk-news-web-easy/nhk-easy-mobile-privacy-policy';
+    final uri = Uri.https(
+        'github.com', '/nhk-news-web-easy/nhk-easy-mobile-privacy-policy');
 
     try {
       await launchUrl(uri);
@@ -102,6 +208,117 @@ class Settings extends StatelessWidget {
         builder: (BuildContext context) {
           return alertDialog;
         },
+      );
+    }
+  }
+
+  void _showCacheStatus(BuildContext context, WidgetRef ref) async {
+    final cacheStatus = await ref.read(cacheStatusProvider.future);
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Cache Status'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStatusRow(
+                'Initialized', cacheStatus['initialized'].toString()),
+            SizedBox(height: 8),
+            _buildStatusRow(
+                'Articles Cached', cacheStatus['articleCount'].toString()),
+            SizedBox(height: 8),
+            _buildStatusRow(
+                'Last Updated',
+                cacheStatus['lastUpdate'] != null
+                    ? _formatDateTime(cacheStatus['lastUpdate'])
+                    : 'Never'),
+            SizedBox(height: 8),
+            _buildStatusRow('Internet Connection',
+                cacheStatus['hasInternetConnection'] ? 'Available' : 'Offline'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            '$label:',
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(value),
+        ),
+      ],
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _refreshCache(BuildContext context, WidgetRef ref) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Refreshing cache...'),
+            ],
+          ),
+        ),
+      );
+
+      await ref.read(cachedNewsProvider.notifier).refreshCache();
+
+      if (!context.mounted) return;
+
+      Navigator.of(context).pop();
+
+      Fluttertoast.showToast(
+        msg: 'Cache refreshed successfully',
+        gravity: ToastGravity.CENTER,
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      Navigator.of(context).pop();
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Error'),
+          content: Text('Failed to refresh cache: ${error.toString()}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        ),
       );
     }
   }

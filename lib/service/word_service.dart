@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:nhk_easy/model/word.dart';
+import 'package:shinpo/model/word.dart';
 
 class WordService {
   Future<List<Word>> fetchWordList(String newsId) async {

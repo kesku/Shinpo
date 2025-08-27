@@ -1,6 +1,6 @@
-import 'package:nhk_easy/error_reporter.dart';
-import 'package:nhk_easy/model/config.dart';
-import 'package:nhk_easy/repository/config_repository.dart';
+import 'package:shinpo/error_reporter.dart';
+import 'package:shinpo/model/config.dart';
+import 'package:shinpo/repository/config_repository.dart';
 
 class ConfigService {
   final _configRepository = ConfigRepository();

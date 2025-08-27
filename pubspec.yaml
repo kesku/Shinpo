@@ -1,5 +1,5 @@
-name: nhk_easy
-description: An unofficial client for NHK NEWS WEB EASY.
+name: shinpo
+description: Shinpo/新報 - Unofficial client for NHK News Web Easy
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -11,31 +11,42 @@ description: An unofficial client for NHK NEWS WEB EASY.
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.6.0+1
+version: 2.0.0+1
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=2.17.0 <4.0.0"
+  flutter: ">=3.9.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  # UI & Navigation
   cupertino_icons: ^1.0.8
+  dynamic_color: ^1.6.8
+  
+  # Networking & Data
   http: ^1.2.2
-  fluttertoast: ^8.2.10
-  pull_to_refresh: ^2.0.0
-  path: ^1.9.0
-  sentry: ^8.12.0
-  settings_ui: ^2.0.2
-  url_launcher: ^6.3.1
-  just_audio: ^0.9.43
-  cached_network_image: ^3.4.1
   sembast: ^3.8.1+1
   path_provider: ^2.1.5
-  flutter_inappwebview: ^6.1.5
+  path: ^1.9.0
   file: ^7.0.1
+  
+  # Media & Images
+  cached_network_image: ^3.4.1
+  just_audio: ^0.10.4
+  
+  # UI Components & Feedback
+  fluttertoast: ^8.2.10
+  pull_to_refresh: ^2.0.0
+  settings_ui: ^2.0.2
+  url_launcher: ^6.3.1
+  share_plus: ^11.1.0
+  
+  # State Management & Utils
+  riverpod: ^2.4.0
+  flutter_riverpod: ^2.4.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
@@ -85,4 +96,3 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
   assets:
     - assets/cfg/
-    - assets/js/
