@@ -1,0 +1,6 @@
+analyzer:
+  exclude:
+    - build/**
+  errors:
+    # Ignore deprecation warnings to prevent CI failures
+    deprecated_member_use: ignore

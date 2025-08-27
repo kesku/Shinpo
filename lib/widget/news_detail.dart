@@ -43,6 +43,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
     if (_hasAudio()) {
       _audioPlayer?.setUrl(_news!.m3u8Url).catchError((error, stackTrace) {
         ErrorReporter.reportError(error, stackTrace);
+        return null;
       });
     }
 
@@ -51,6 +52,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
         .then((words) => this._words = words)
         .catchError((error, stackTrace) {
       ErrorReporter.reportError(error, stackTrace);
+      return <Word>[];
     });
   }
 
@@ -130,9 +132,11 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
                 try {
                   final shareText =
                       '${_news?.title}\n\nRead more NHK Easy news with this app!';
-                  await Share.share(
-                    shareText,
-                    subject: 'NHK Easy News: ${_news?.title}',
+                  await SharePlus.instance.share(
+                    ShareParams(
+                      text: shareText,
+                      subject: 'NHK Easy News: ${_news?.title}',
+                    ),
                   );
                 } catch (e) {
                   if (mounted) {
@@ -221,7 +225,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
                 ),
               ),
               height: 80,
@@ -430,8 +434,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
       padding: EdgeInsets.only(bottom: 16),
       child: GestureDetector(
         onTapDown: (details) {
-          final RenderBox renderBox = context.findRenderObject() as RenderBox;
-          final localPosition = renderBox.globalToLocal(details.globalPosition);
+          // Handle tap on dictionary words
 
           for (final part in textParts) {
             if (part['type'] == 'dictionary') {
