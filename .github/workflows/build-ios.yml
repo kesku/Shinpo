@@ -3,12 +3,15 @@ name: Build iOS
 on:
   push:
     branches: [ "master" ]
+    tags: [ "*" ]
   pull_request:
     branches: [ "master" ]
 
 jobs:
   build:
     runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -31,11 +34,28 @@ jobs:
       - name: Analyze code
         run: flutter analyze
 
-      - name: Build iOS (No Code Sign)
-        run: flutter build ios --release --no-codesign
+      - name: Build iOS (Debug, No Code Sign)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: flutter build ios --debug --no-codesign
+
+      - name: Zip Runner.app
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          cd build/ios/iphoneos
+          zip -r Runner.app.zip Runner.app
 
       - name: Upload iOS build artifact
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: ios-build
           path: build/ios/iphoneos/Runner.app
+
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/ios/iphoneos/Runner.app.zip
+          generate_release_notes: true
+          make_latest: true
