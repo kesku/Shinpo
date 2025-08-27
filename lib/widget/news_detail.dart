@@ -10,6 +10,7 @@ import 'package:shinpo/providers/reading_history_provider.dart';
 import 'package:shinpo/service/word_service.dart';
 import 'package:shinpo/widget/ruby_text_widget.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NewsDetail extends ConsumerStatefulWidget {
   final News news;
@@ -126,6 +127,40 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
                 );
               },
             ),
+            Tooltip(
+              message: 'Open in NHK',
+              child: IconButton(
+                icon: Icon(Icons.open_in_new, color: colorScheme.onSurface),
+                onPressed: () async {
+                  try {
+                    final nhkUrl =
+                        'https://www3.nhk.or.jp/news/easy/${_news?.newsId}/${_news?.newsId}.html';
+                    final uri = Uri.parse(nhkUrl);
+
+                    final result =
+                        await launchUrl(uri, mode: LaunchMode.platformDefault);
+
+                    if (!result) {
+                      throw Exception('Failed to launch URL');
+                    }
+                  } catch (e) {
+                    print('Error launching URL: $e');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('Failed to open in NHK: ${e.toString()}'),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
             IconButton(
               icon: Icon(Icons.share, color: colorScheme.onSurface),
               onPressed: () async {
@@ -225,7 +260,10 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7)
+                  ],
                 ),
               ),
               height: 80,

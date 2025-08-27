@@ -13,14 +13,11 @@ class CachedNewsService {
   final _newsService = NewsService();
 
   Future<List<News>> fetchNewsList(DateTime startDate, DateTime endDate) async {
-    
     if (!_isValidDate(startDate) || !_isValidDate(endDate)) {
-      print('CachedNewsService: Invalid dates provided, returning empty list');
       return [];
     }
 
     if (startDate.isAfter(endDate)) {
-      print('CachedNewsService: Start date after end date, returning empty list');
       return [];
     }
 
@@ -81,10 +78,8 @@ class CachedNewsService {
     String newsFetchedStartUtc,
     String newsFetchedEndUtc,
   ) {
-    
-    if (!_isValidDateString(newsFetchedStartUtc) || !_isValidDateString(newsFetchedEndUtc)) {
-      print('CachedNewsService: Invalid date strings in config creation');
-      
+    if (!_isValidDateString(newsFetchedStartUtc) ||
+        !_isValidDateString(newsFetchedEndUtc)) {
       final now = DateTime.now().toUtc();
       newsFetchedStartUtc = now.toIso8601String();
       newsFetchedEndUtc = now.toIso8601String();
@@ -136,14 +131,12 @@ class CachedNewsService {
     }
   }
 
-  
   bool _isValidDate(DateTime date) {
     try {
-      
       final now = DateTime.now().toUtc();
-      final minDate = DateTime(2020, 1, 1); 
-      final maxDate = now.add(Duration(days: 365)); 
-      
+      final minDate = DateTime(2020, 1, 1);
+      final maxDate = now.add(Duration(days: 365));
+
       return date.isAfter(minDate) && date.isBefore(maxDate);
     } catch (e) {
       print('CachedNewsService: Date validation error: $e');

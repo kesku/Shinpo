@@ -14,7 +14,6 @@ class CacheManagerService {
 
   Future<List<News>>? _inFlightRefresh;
 
-  
   static const int defaultCacheDays = 14;
   static const int maxCacheDays = 30;
   static const int minCacheDays = 7;
@@ -41,12 +40,11 @@ class CacheManagerService {
 
     DateTime newestDate = latestNews == null
         ? (config != null
-                  ? DateTime.parse(config.newsFetchedEndUtc)
-                  : DateTime.now().toUtc())
-              .subtract(Duration(days: days))
+                ? DateTime.parse(config.newsFetchedEndUtc)
+                : DateTime.now().toUtc())
+            .subtract(Duration(days: days))
         : DateTime.parse(latestNews.publishedAtUtc).add(Duration(days: 1));
 
-    
     final now = DateTime.now().toUtc();
     if (newestDate.isAfter(now)) {
       newestDate = now.subtract(Duration(days: days));
@@ -72,30 +70,24 @@ class CacheManagerService {
             59,
           ).add(Duration(days: days));
 
-    
     if (endDate.isAfter(now)) {
       endDate = now;
     }
 
-    
     if (!_isValidDate(startDate) || !_isValidDate(endDate)) {
-      print('CacheManagerService: Invalid date detected, returning cached data');
       return currentNews;
     }
 
-    
     if (startDate.isAfter(endDate)) {
-      print('CacheManagerService: Invalid date range, returning cached data');
       return currentNews;
     }
-    
+
     final result = await _cachedNewsService.fetchNewsList(startDate, endDate);
-    
-    
+
     if (result.isEmpty && currentNews.isNotEmpty) {
       return currentNews;
     }
-    
+
     return result;
   }
 
@@ -105,14 +97,12 @@ class CacheManagerService {
     return all;
   }
 
-  
   bool _isValidDate(DateTime date) {
     try {
-      
       final now = DateTime.now().toUtc();
-      final minDate = DateTime(2020, 1, 1); 
-      final maxDate = now.add(Duration(days: 365)); 
-      
+      final minDate = DateTime(2020, 1, 1);
+      final maxDate = now.add(Duration(days: 365));
+
       return date.isAfter(minDate) && date.isBefore(maxDate);
     } catch (e) {
       print('CacheManagerService: Date validation error: $e');
@@ -130,12 +120,10 @@ class CacheManagerService {
     }
   }
 
-  
   Future<void> cleanupOldCache({int maxDays = defaultCacheDays}) async {
     try {
       await _newsRepository.deleteNewsOlderThanDays(maxDays);
     } catch (e) {
-      
       print('Cache cleanup failed: $e');
     }
   }
@@ -154,24 +142,22 @@ class CacheManagerService {
   Future<bool> validateCache() async {
     try {
       final allNews = await _newsRepository.getAllNews();
-      
-      
+
       if (allNews.isEmpty) {
-        return true; 
+        return true;
       }
 
-      
       for (final news in allNews) {
-        if (news.newsId.isEmpty || 
-            news.title.isEmpty || 
+        if (news.newsId.isEmpty ||
+            news.title.isEmpty ||
             news.publishedAtUtc.isEmpty ||
             news.publishedAtEpoch == 0) {
-          return false; 
+          return false;
         }
-        
-        
+
         if (!_isValidDateString(news.publishedAtUtc)) {
-          print('CacheManagerService: Invalid date found in cache: ${news.publishedAtUtc}');
+          print(
+              'CacheManagerService: Invalid date found in cache: ${news.publishedAtUtc}');
           return false;
         }
       }
@@ -196,8 +182,8 @@ class CacheManagerService {
         'oldestDate': oldestDate,
         'newestDate': newestDate,
         'isValid': isValid,
-        'ageInDays': newestDate != null 
-            ? DateTime.now().difference(newestDate).inDays 
+        'ageInDays': newestDate != null
+            ? DateTime.now().difference(newestDate).inDays
             : null,
         'hitRate': analytics['hitRate'],
         'totalRequests': analytics['totalRequests'],
@@ -220,34 +206,28 @@ class CacheManagerService {
 
   Future<void> warmCache({int days = 7}) async {
     try {
-      
       await refreshCache(days: days);
     } catch (e) {
       print('Cache warming failed: $e');
-      
     }
   }
 
   Future<void> optimizeCache() async {
     try {
-      
       await cleanupOldCache(maxDays: defaultCacheDays);
-      
-      
+
       final isValid = await validateCache();
       if (!isValid) {
         print('Cache validation failed, clearing cache');
         await clearAllCache();
       }
-      
-      
+
       await _analyticsService.recordOptimization();
     } catch (e) {
       print('Cache optimization failed: $e');
     }
   }
 
-  
   Future<void> recordCacheHit() async {
     await _analyticsService.recordCacheHit();
   }
