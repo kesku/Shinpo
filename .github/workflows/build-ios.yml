@@ -36,12 +36,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: flutter build ios --debug --no-codesign
 
-      - name: Zip Runner.app
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          cd build/ios/iphoneos
-          zip -r Runner.app.zip Runner.app
-
       - name: Upload iOS build artifact
         if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
