@@ -26,6 +26,7 @@ devtools_options.yaml
 .pub-cache/
 .pub/
 /build/
+.metadata
 
 # Android related
 .gradle/
