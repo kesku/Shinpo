@@ -1,10 +1,10 @@
-import 'package:nhk_easy/error_reporter.dart';
-import 'package:nhk_easy/model/config.dart';
-import 'package:nhk_easy/model/news.dart';
-import 'package:nhk_easy/repository/config_repository.dart';
-import 'package:nhk_easy/repository/news_repository.dart';
-import 'package:nhk_easy/service/config_service.dart';
-import 'package:nhk_easy/service/news_service.dart';
+import 'package:shinpo/error_reporter.dart';
+import 'package:shinpo/model/config.dart';
+import 'package:shinpo/model/news.dart';
+import 'package:shinpo/repository/config_repository.dart';
+import 'package:shinpo/repository/news_repository.dart';
+import 'package:shinpo/service/config_service.dart';
+import 'package:shinpo/service/news_service.dart';
 
 class CachedNewsService {
   final _configRepository = ConfigRepository();
@@ -36,14 +36,18 @@ class CachedNewsService {
 
       final newsFetchedStartUtc = news.last.publishedAtUtc;
       final newsFetchedEndUtc = news.first.publishedAtUtc;
-      final newConfig =
-          _createNewConfig(config, newsFetchedStartUtc, newsFetchedEndUtc);
+      final newConfig = _createNewConfig(
+        config,
+        newsFetchedStartUtc,
+        newsFetchedEndUtc,
+      );
 
       return Future.wait([
         _newsRepository.saveAll(news),
-        _configRepository.save(newConfig)
+        _configRepository.save(newConfig),
       ]).then((value) => news).catchError((error, stackTrace) {
         ErrorReporter.reportError(error, stackTrace);
+        return news;
       });
     }
   }
@@ -57,28 +61,53 @@ class CachedNewsService {
   }
 
   Config _createNewConfig(
-      Config? config, String newsFetchedStartUtc, String newsFetchedEndUtc) {
+    Config? config,
+    String newsFetchedStartUtc,
+    String newsFetchedEndUtc,
+  ) {
     if (config != null) {
-      final newsFetchedStartUtcNew = DateTime.parse(newsFetchedStartUtc)
-                  .compareTo(DateTime.parse(config.newsFetchedStartUtc)) <=
+      final newsFetchedStartUtcNew = DateTime.parse(
+                newsFetchedStartUtc,
+              ).compareTo(DateTime.parse(config.newsFetchedStartUtc)) <=
               0
           ? newsFetchedStartUtc
           : config.newsFetchedStartUtc;
-      final newsFetchedEndUtcNew = DateTime.parse(newsFetchedEndUtc)
-                  .compareTo(DateTime.parse(config.newsFetchedEndUtc)) >=
+      final newsFetchedEndUtcNew = DateTime.parse(
+                newsFetchedEndUtc,
+              ).compareTo(DateTime.parse(config.newsFetchedEndUtc)) >=
               0
           ? newsFetchedEndUtc
           : config.newsFetchedEndUtc;
 
       return Config(
-          id: config.id,
-          newsFetchedStartUtc: newsFetchedStartUtcNew,
-          newsFetchedEndUtc: newsFetchedEndUtcNew);
+        id: config.id,
+        newsFetchedStartUtc: newsFetchedStartUtcNew,
+        newsFetchedEndUtc: newsFetchedEndUtcNew,
+      );
     } else {
       return Config(
-          id: 1,
-          newsFetchedStartUtc: newsFetchedStartUtc,
-          newsFetchedEndUtc: newsFetchedEndUtc);
+        id: 1,
+        newsFetchedStartUtc: newsFetchedStartUtc,
+        newsFetchedEndUtc: newsFetchedEndUtc,
+      );
+    }
+  }
+
+  Future<List<News>> getAllNews() async {
+    try {
+      return await _newsRepository.getAllNews();
+    } catch (error, stackTrace) {
+      ErrorReporter.reportError(error, stackTrace);
+      return [];
+    }
+  }
+
+  Future<News?> getNewsById(String newsId) async {
+    try {
+      return await _newsRepository.getNewsById(newsId);
+    } catch (error, stackTrace) {
+      ErrorReporter.reportError(error, stackTrace);
+      return null;
     }
   }
 }

@@ -1,4 +1,4 @@
-package nhk.nhk_easy
+package kesku.shinpo
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity

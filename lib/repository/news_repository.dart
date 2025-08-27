@@ -1,4 +1,4 @@
-import 'package:nhk_easy/model/news.dart';
+import 'package:shinpo/model/news.dart';
 import 'package:sembast/sembast.dart';
 
 import 'base_repository.dart';
@@ -29,5 +29,24 @@ class NewsRepository extends BaseRepository {
     await Future.wait(news.map((n) async {
       await _newsStore.record(n.newsId).put(database, n.toMap());
     }));
+  }
+
+  Future<List<News>> getAllNews() async {
+    final database = await getDatabase();
+    final rows = await _newsStore.find(database);
+
+    return rows.map((n) {
+      return News.fromJson(n.value);
+    }).toList();
+  }
+
+  Future<News?> getNewsById(String newsId) async {
+    final database = await getDatabase();
+    final record = await _newsStore.record(newsId).get(database);
+
+    if (record != null) {
+      return News.fromJson(record);
+    }
+    return null;
   }
 }

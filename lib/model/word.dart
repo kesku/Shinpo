@@ -1,4 +1,4 @@
-import 'package:nhk_easy/model/word_definition.dart';
+import 'package:shinpo/model/word_definition.dart';
 
 class Word {
   String idInNews = '';

@@ -1,4 +1,4 @@
-import 'package:nhk_easy/model/config.dart';
+import 'package:shinpo/model/config.dart';
 import 'package:sembast/sembast.dart';
 
 import 'base_repository.dart';
