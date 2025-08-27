@@ -9,6 +9,7 @@ import 'package:shinpo/providers/font_size_provider.dart';
 import 'package:shinpo/providers/reading_history_provider.dart';
 import 'package:shinpo/service/word_service.dart';
 import 'package:shinpo/widget/ruby_text_widget.dart';
+import 'package:shinpo/util/html_utils.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
@@ -378,66 +379,10 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
   }
 
   List<dynamic> _parseHtmlBody(String htmlBody) {
-    final List<dynamic> result = [];
-
-    final paragraphs =
-        htmlBody.split(RegExp(r'</?p[^>]*>')).where((p) => p.trim().isNotEmpty);
-
-    for (String paragraph in paragraphs) {
-      if (paragraph.trim().isEmpty) continue;
-
-      final dicWordPattern = RegExp(
-        r'<span[^>]*class="dicWin"[^>]*id="([^"]*)"[^>]*>(.*?)</span>',
-      );
-      final matches = dicWordPattern.allMatches(paragraph);
-
-      if (matches.isEmpty) {
-        result.add(_cleanHtml(paragraph));
-      } else {
-        final textParts = <Map<String, dynamic>>[];
-        int lastIndex = 0;
-
-        for (final match in matches) {
-          if (match.start > lastIndex) {
-            final beforeText = paragraph.substring(lastIndex, match.start);
-            if (beforeText.trim().isNotEmpty) {
-              textParts.add({'type': 'text', 'text': _cleanHtml(beforeText)});
-            }
-          }
-
-          textParts.add({
-            'type': 'dictionary',
-            'id': match.group(1),
-            'text': _cleanHtml(match.group(2) ?? ''),
-          });
-
-          lastIndex = match.end;
-        }
-
-        if (lastIndex < paragraph.length) {
-          final afterText = paragraph.substring(lastIndex);
-          if (afterText.trim().isNotEmpty) {
-            textParts.add({'type': 'text', 'text': _cleanHtml(afterText)});
-          }
-        }
-
-        result.add(textParts);
-      }
-    }
-
-    return result;
+    return HtmlUtils.parseArticleBlocks(htmlBody);
   }
 
-  String _cleanHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .trim();
-  }
+  
 
   Widget _buildFormattedText(
     List<Map<String, dynamic>> textParts,
@@ -631,8 +576,10 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
                 ),
                 SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    entry.value.definition,
+                  child: RubyTextWidget(
+                    text: entry.value.definitionWithRuby.isNotEmpty
+                        ? entry.value.definitionWithRuby
+                        : entry.value.definition,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurface,
                       height: 1.5,

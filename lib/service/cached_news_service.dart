@@ -5,6 +5,7 @@ import 'package:shinpo/repository/config_repository.dart';
 import 'package:shinpo/repository/news_repository.dart';
 import 'package:shinpo/service/config_service.dart';
 import 'package:shinpo/service/news_service.dart';
+import 'package:shinpo/util/date_validation.dart';
 
 class CachedNewsService {
   final _configRepository = ConfigRepository();
@@ -13,7 +14,8 @@ class CachedNewsService {
   final _newsService = NewsService();
 
   Future<List<News>> fetchNewsList(DateTime startDate, DateTime endDate) async {
-    if (!_isValidDate(startDate) || !_isValidDate(endDate)) {
+    if (!DateValidation.isValidDate(startDate) ||
+        !DateValidation.isValidDate(endDate)) {
       return [];
     }
 
@@ -131,26 +133,6 @@ class CachedNewsService {
     }
   }
 
-  bool _isValidDate(DateTime date) {
-    try {
-      final now = DateTime.now().toUtc();
-      final minDate = DateTime(2020, 1, 1);
-      final maxDate = now.add(Duration(days: 365));
-
-      return date.isAfter(minDate) && date.isBefore(maxDate);
-    } catch (e) {
-      print('CachedNewsService: Date validation error: $e');
-      return false;
-    }
-  }
-
-  bool _isValidDateString(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return _isValidDate(date);
-    } catch (e) {
-      print('CachedNewsService: Invalid date string: $dateString');
-      return false;
-    }
-  }
+  bool _isValidDateString(String dateString) =>
+      DateValidation.isValidDateString(dateString);
 }

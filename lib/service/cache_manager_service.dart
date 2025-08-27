@@ -5,6 +5,7 @@ import 'package:shinpo/repository/news_repository.dart';
 import 'package:shinpo/service/cached_news_service.dart';
 import 'package:shinpo/service/config_service.dart';
 import 'package:shinpo/service/cache_analytics_service.dart';
+import 'package:shinpo/util/date_validation.dart';
 
 class CacheManagerService {
   final _cachedNewsService = CachedNewsService();
@@ -74,7 +75,8 @@ class CacheManagerService {
       endDate = now;
     }
 
-    if (!_isValidDate(startDate) || !_isValidDate(endDate)) {
+    if (!DateValidation.isValidDate(startDate) ||
+        !DateValidation.isValidDate(endDate)) {
       return currentNews;
     }
 
@@ -97,28 +99,8 @@ class CacheManagerService {
     return all;
   }
 
-  bool _isValidDate(DateTime date) {
-    try {
-      final now = DateTime.now().toUtc();
-      final minDate = DateTime(2020, 1, 1);
-      final maxDate = now.add(Duration(days: 365));
-
-      return date.isAfter(minDate) && date.isBefore(maxDate);
-    } catch (e) {
-      print('CacheManagerService: Date validation error: $e');
-      return false;
-    }
-  }
-
-  bool _isValidDateString(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return _isValidDate(date);
-    } catch (e) {
-      print('CacheManagerService: Invalid date string: $dateString');
-      return false;
-    }
-  }
+  bool _isValidDateString(String dateString) =>
+      DateValidation.isValidDateString(dateString);
 
   Future<void> cleanupOldCache({int maxDays = defaultCacheDays}) async {
     try {

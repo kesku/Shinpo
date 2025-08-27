@@ -18,4 +18,10 @@ class Word {
 
     return word;
   }
+
+  Map<String, dynamic> toMap() => {
+        'idInNews': idInNews,
+        'name': name,
+        'definitions': definitions.map((d) => d.toMap()).toList(),
+      };
 }

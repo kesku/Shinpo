@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:html/parser.dart' as html;
+import 'package:html/dom.dart' as dom;
 
 class RubyTextWidget extends StatelessWidget {
   final String text;
@@ -22,75 +24,96 @@ class RubyTextWidget extends StatelessWidget {
     final defaultStyle =
         style ?? theme.textTheme.bodyMedium ?? const TextStyle();
 
-    final List<InlineSpan> spans = [];
-
-    final rubyPattern = RegExp(r'<ruby>(.*?)<rt>(.*?)</rt></ruby>');
-    final matches = rubyPattern.allMatches(text);
-
-    if (matches.isEmpty) {
-      return Text(
-        text,
-        style: defaultStyle,
-        maxLines: maxLines,
-        overflow: overflow,
-        textAlign: textAlign,
-      );
-    }
-
-    int lastIndex = 0;
-
-    for (final match in matches) {
-      if (match.start > lastIndex) {
-        final beforeText = text.substring(lastIndex, match.start);
-        if (beforeText.isNotEmpty) {
-          spans.add(TextSpan(
-            text: beforeText,
-            style: defaultStyle,
-          ));
-        }
-      }
-
-      final baseText = match.group(1) ?? '';
-
-      final rubyText = match.group(2) ?? '';
-      spans.add(WidgetSpan(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              rubyText,
-              style: defaultStyle.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontSize: (defaultStyle.fontSize ?? 16) * 0.6,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-            Text(
-              baseText,
-              style: defaultStyle,
-            ),
-          ],
-        ),
-      ));
-
-      lastIndex = match.end;
-    }
-
-    if (lastIndex < text.length) {
-      final afterText = text.substring(lastIndex);
-      if (afterText.isNotEmpty) {
-        spans.add(TextSpan(
-          text: afterText,
-          style: defaultStyle,
-        ));
-      }
-    }
+    final spans = _buildSpansFromHtml(text, defaultStyle, theme);
 
     return RichText(
-      text: TextSpan(children: spans),
+      text: TextSpan(children: spans, style: defaultStyle),
       maxLines: maxLines,
       overflow: overflow ?? TextOverflow.clip,
       textAlign: textAlign ?? TextAlign.start,
     );
+  }
+
+  List<InlineSpan> _buildSpansFromHtml(
+    String htmlSource,
+    TextStyle style,
+    ThemeData theme,
+  ) {
+    final fragment = html.parseFragment(htmlSource);
+    final List<InlineSpan> spans = [];
+
+    void walk(dom.Node node) {
+      if (node.nodeType == dom.Node.TEXT_NODE) {
+        final t = (node as dom.Text).data;
+        if (t.isNotEmpty) spans.add(TextSpan(text: t));
+        return;
+      }
+      if (node is! dom.Element) {
+        return;
+      }
+
+      switch (node.localName) {
+        case 'ruby':
+          final base = _extractRubyBase(node).trim();
+          final rubies = _extractRubyTexts(node).join(' ');
+          if (base.isEmpty) break;
+          spans.add(WidgetSpan(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (rubies.isNotEmpty)
+                  Text(
+                    rubies,
+                    style: style.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: (style.fontSize ?? 16) * 0.6,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                Text(base, style: style),
+              ],
+            ),
+          ));
+          break;
+        case 'br':
+          spans.add(const TextSpan(text: '\n'));
+          break;
+        default:
+          for (final child in node.nodes) {
+            walk(child);
+          }
+      }
+    }
+
+    for (final node in fragment.nodes) {
+      walk(node);
+    }
+    return spans;
+  }
+
+  String _extractRubyBase(dom.Element rubyEl) {
+    final buffer = StringBuffer();
+    for (final n in rubyEl.nodes) {
+      if (n is dom.Element && (n.localName == 'rt' || n.localName == 'rp')) {
+        continue;
+      }
+      buffer.write(_nodeText(n));
+    }
+    return buffer.toString();
+  }
+
+  List<String> _extractRubyTexts(dom.Element rubyEl) {
+    return rubyEl.children
+        .where((c) => c.localName == 'rt')
+        .map((rt) => _nodeText(rt).trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+  }
+
+  String _nodeText(dom.Node node) {
+    if (node.nodeType == dom.Node.TEXT_NODE) {
+      return (node as dom.Text).data;
+    }
+    return node.nodes.map(_nodeText).join('');
   }
 }

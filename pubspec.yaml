@@ -48,6 +48,9 @@ dependencies:
   flutter_riverpod: ^2.4.0
   shared_preferences: ^2.3.2
   
+  # HTML parsing
+  html: ^0.15.4
+  
   # App Info
   package_info_plus: ^8.0.2
 

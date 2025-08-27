@@ -1,5 +1,6 @@
 import 'package:shinpo/model/news.dart';
 import 'package:shinpo/repository/news_repository.dart';
+import 'package:shinpo/util/html_utils.dart';
 
 class SearchService {
   final _newsRepository = NewsRepository();
@@ -15,7 +16,7 @@ class SearchService {
       final filteredNews = allNews.where((news) {
         final searchQuery = query.toLowerCase().trim();
         final title = news.title.toLowerCase();
-        final body = news.body.toLowerCase();
+        final body = HtmlUtils.stripHtml(news.body).toLowerCase();
 
         return title.contains(searchQuery) || body.contains(searchQuery);
       }).toList();
@@ -61,7 +62,7 @@ class SearchService {
       final filteredNews = newsInRange.where((news) {
         final searchQuery = query.toLowerCase().trim();
         final title = news.title.toLowerCase();
-        final body = news.body.toLowerCase();
+        final body = HtmlUtils.stripHtml(news.body).toLowerCase();
 
         return title.contains(searchQuery) || body.contains(searchQuery);
       }).toList();

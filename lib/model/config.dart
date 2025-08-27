@@ -1,3 +1,5 @@
+import 'package:shinpo/util/date_validation.dart';
+
 class Config {
   int id = 0;
 
@@ -17,11 +19,11 @@ class Config {
     config.newsFetchedStartUtc = json['newsFetchedStartUtc'];
     config.newsFetchedEndUtc = json['newsFetchedEndUtc'];
 
-    if (!config._isValidDateString(config.newsFetchedStartUtc)) {
+    if (!DateValidation.isValidDateString(config.newsFetchedStartUtc)) {
       config.newsFetchedStartUtc = DateTime.now().toUtc().toIso8601String();
     }
 
-    if (!config._isValidDateString(config.newsFetchedEndUtc)) {
+    if (!DateValidation.isValidDateString(config.newsFetchedEndUtc)) {
       config.newsFetchedEndUtc = DateTime.now().toUtc().toIso8601String();
     }
 
@@ -37,22 +39,9 @@ class Config {
   }
 
   bool isValid() {
-    return _isValidDateString(newsFetchedStartUtc) &&
-        _isValidDateString(newsFetchedEndUtc) &&
+    return DateValidation.isValidDateString(newsFetchedStartUtc) &&
+        DateValidation.isValidDateString(newsFetchedEndUtc) &&
         _isValidDateRange();
-  }
-
-  bool _isValidDateString(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      final now = DateTime.now().toUtc();
-      final minDate = DateTime(2020, 1, 1);
-      final maxDate = now.add(Duration(days: 365));
-
-      return date.isAfter(minDate) && date.isBefore(maxDate);
-    } catch (e) {
-      return false;
-    }
   }
 
   bool _isValidDateRange() {

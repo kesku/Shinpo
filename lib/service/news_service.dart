@@ -7,6 +7,7 @@ import 'package:shinpo/model/news.dart';
 import 'package:shinpo/config/api_config.dart';
 import 'package:shinpo/util/date_formatter.dart';
 import 'package:shinpo/service/http_service.dart';
+import 'package:shinpo/util/date_validation.dart';
 
 class NewsService {
   Future<List<News>> fetchNewsList(DateTime startDate, DateTime endDate) async {
@@ -63,16 +64,7 @@ class NewsService {
   }
 
   bool _isValidDate(DateTime date) {
-    try {
-      final now = DateTime.now().toUtc();
-      final minDate = DateTime(2020, 1, 1);
-      final maxDate = now.add(Duration(days: 365));
-
-      return date.isAfter(minDate) && date.isBefore(maxDate);
-    } catch (e) {
-      print('NewsService: Date validation error: $e');
-      return false;
-    }
+    return DateValidation.isValidDate(date);
   }
 
 }

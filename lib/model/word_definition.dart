@@ -12,4 +12,9 @@ class WordDefinition {
 
     return wordDefinition;
   }
+
+  Map<String, dynamic> toMap() => {
+        'definition': definition,
+        'definitionWithRuby': definitionWithRuby,
+      };
 }

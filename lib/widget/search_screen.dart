@@ -7,6 +7,7 @@ import 'package:shinpo/providers/search_provider.dart';
 import 'package:shinpo/widget/news_detail.dart';
 import 'package:shinpo/widget/search_filters.dart';
 import 'package:shinpo/widget/ruby_text_widget.dart';
+import 'package:shinpo/util/html_utils.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   @override
@@ -428,15 +429,33 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                   SizedBox(height: 8),
                   if (news.body.isNotEmpty) ...[
-                    Text(
-                      news.body,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    Builder(builder: (context) {
+                      final query = ref.read(searchProvider).query ?? '';
+                      final normalStyle = Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ) ??
+                          TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
+                      final highlightStyle = normalStyle.copyWith(
+                        backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                        color: Theme.of(context).colorScheme.onTertiaryContainer,
+                        fontWeight: FontWeight.w600,
+                      );
+                      return RichText(
+                        text: _buildHighlightedSnippet(
+                          news.body,
+                          query,
+                          normalStyle,
+                          highlightStyle,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      );
+                    }),
                     SizedBox(height: 8),
                   ],
                   Row(
@@ -501,6 +520,45 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
       ),
     );
+  }
+
+  TextSpan _buildHighlightedSnippet(
+    String html,
+    String query,
+    TextStyle normal,
+    TextStyle highlight,
+  ) {
+    final plain = HtmlUtils.stripHtml(html);
+    if (query.trim().isEmpty || plain.isEmpty) {
+      return TextSpan(text: plain, style: normal);
+    }
+    final q = query.trim();
+    final idx = plain.toLowerCase().indexOf(q.toLowerCase());
+    final window = 90;
+    final start = idx == -1
+        ? 0
+        : (idx - window ~/ 2).clamp(0, (plain.length - 1).clamp(0, plain.length));
+    final end = idx == -1
+        ? (plain.length < window ? plain.length : window)
+        : (idx + q.length + window ~/ 2).clamp(0, plain.length);
+    final snippet = plain.substring(start, end);
+
+    if (idx == -1) {
+      return TextSpan(text: snippet, style: normal);
+    }
+
+    final localIdx = snippet.toLowerCase().indexOf(q.toLowerCase());
+    final before = snippet.substring(0, localIdx);
+    final match = snippet.substring(localIdx, localIdx + q.length);
+    final after = snippet.substring(localIdx + q.length);
+
+    final spans = <InlineSpan>[];
+    if (start > 0) spans.add(const TextSpan(text: '…'));
+    if (before.isNotEmpty) spans.add(TextSpan(text: before, style: normal));
+    spans.add(TextSpan(text: match, style: highlight));
+    if (after.isNotEmpty) spans.add(TextSpan(text: after, style: normal));
+    if (end < plain.length) spans.add(const TextSpan(text: '…'));
+    return TextSpan(children: spans, style: normal);
   }
 }
 

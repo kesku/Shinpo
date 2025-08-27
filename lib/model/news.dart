@@ -1,3 +1,5 @@
+import 'package:shinpo/util/date_validation.dart';
+
 class News {
   String newsId = '';
 
@@ -58,19 +60,6 @@ class News {
         title.isNotEmpty &&
         publishedAtUtc.isNotEmpty &&
         publishedAtEpoch > 0 &&
-        _isValidDateString(publishedAtUtc);
-  }
-
-  bool _isValidDateString(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      final now = DateTime.now().toUtc();
-      final minDate = DateTime(2020, 1, 1);
-      final maxDate = now.add(Duration(days: 365));
-
-      return date.isAfter(minDate) && date.isBefore(maxDate);
-    } catch (e) {
-      return false;
-    }
+        DateValidation.isValidDateString(publishedAtUtc);
   }
 }
