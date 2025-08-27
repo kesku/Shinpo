@@ -6,10 +6,14 @@ import 'package:shinpo/model/news.dart';
 import 'package:shinpo/model/word.dart';
 import 'package:shinpo/providers/bookmark_provider.dart';
 import 'package:shinpo/providers/font_size_provider.dart';
+import 'package:shinpo/providers/furigana_provider.dart';
 import 'package:shinpo/providers/reading_history_provider.dart';
 import 'package:shinpo/service/word_service.dart';
 import 'package:shinpo/widget/ruby_text_widget.dart';
 import 'package:shinpo/util/html_utils.dart';
+import 'package:shinpo/util/date_locale_utils.dart';
+import 'package:shinpo/widget/audio_chip.dart';
+import 'package:shinpo/widget/audio_mini_player.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
@@ -93,6 +97,16 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             ),
           ),
           actions: [
+            // Furigana visibility toggle
+            Consumer(builder: (context, ref, _) {
+              final visible = ref.watch(furiganaProvider);
+              return IconButton(
+                tooltip: visible ? 'Hide furigana' : 'Show furigana',
+                icon: Icon(visible ? Icons.text_fields : Icons.text_fields_outlined,
+                    color: colorScheme.onSurface),
+                onPressed: () => ref.read(furiganaProvider.notifier).toggle(),
+              );
+            }),
             Consumer(
               builder: (context, ref, child) {
                 final bookmarkedNewsIds = ref.watch(bookmarkedNewsIdsProvider);
@@ -199,7 +213,8 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             if (_showDictionary) _buildDictionary(),
           ],
         ),
-        floatingActionButton: _hasAudio() ? _buildAudioPlayer() : null,
+        bottomNavigationBar:
+            _hasAudio() && _audioPlayer != null ? AudioMiniPlayer(player: _audioPlayer!) : null,
       ),
     );
   }
@@ -223,6 +238,8 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             ]),
           ),
         ),
+        if (_hasAudio())
+          const SliverToBoxAdapter(child: SizedBox(height: 84)),
       ],
     );
   }
@@ -239,19 +256,22 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
               bottomLeft: Radius.circular(16),
               bottomRight: Radius.circular(16),
             ),
-            child: Image.network(
-              _news!.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey[300],
-                  child: Icon(
-                    Icons.image_not_supported,
-                    size: 64,
-                    color: Colors.grey[600],
-                  ),
-                );
-              },
+            child: Hero(
+              tag: _news!.newsId,
+              child: Image.network(
+                _news!.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[300],
+                    child: Icon(
+                      Icons.image_not_supported,
+                      size: 64,
+                      color: Colors.grey[600],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           Positioned(
@@ -281,6 +301,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final fontScale = ref.watch(fontSizeProvider).scale;
+    final showRuby = ref.watch(furiganaProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,6 +315,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             fontSize:
                 (theme.textTheme.headlineMedium?.fontSize ?? 24) * fontScale,
           ),
+          showRuby: showRuby,
         ),
         SizedBox(height: 16),
         Row(
@@ -305,7 +327,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             ),
             SizedBox(width: 8),
             Text(
-              _formatPublishedDate(),
+              _formatPublishedDate(context),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontSize:
@@ -314,31 +336,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             ),
             Spacer(),
             if (_hasAudio())
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.volume_up,
-                      size: 16,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Audio Available',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const AudioChip(),
           ],
         ),
       ],
@@ -360,11 +358,11 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
         if (textBlock is String) {
           return Padding(
             padding: EdgeInsets.only(bottom: 16),
-            child: Text(
+            child: SelectableText(
               textBlock,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurface,
-                height: 1.6,
+                height: 1.7,
                 fontSize:
                     (theme.textTheme.bodyLarge?.fontSize ?? 16) * fontScale,
               ),
@@ -390,6 +388,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
     ColorScheme colorScheme,
   ) {
     final List<InlineSpan> spans = [];
+    final fontScale = ref.watch(fontSizeProvider).scale;
 
     for (final part in textParts) {
       if (part['type'] == 'text') {
@@ -398,7 +397,8 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             text: part['text'],
             style: theme.textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurface,
-              height: 1.6,
+              height: 1.7,
+              fontSize: (theme.textTheme.bodyLarge?.fontSize ?? 16) * fontScale,
             ),
           ),
         );
@@ -411,7 +411,8 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             text: part['text'],
             style: theme.textTheme.bodyLarge?.copyWith(
               color: colorScheme.primary,
-              height: 1.6,
+              height: 1.7,
+              fontSize: (theme.textTheme.bodyLarge?.fontSize ?? 16) * fontScale,
               decoration: TextDecoration.underline,
               decorationColor: colorScheme.primary,
             ),
@@ -423,7 +424,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
 
     return Padding(
       padding: EdgeInsets.only(bottom: 16),
-      child: RichText(text: TextSpan(children: spans)),
+      child: SelectableText.rich(TextSpan(children: spans)),
     );
   }
 
@@ -441,26 +442,12 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
     }
   }
 
-  String _formatPublishedDate() {
-    if (_news?.publishedAtUtc == null || _news!.publishedAtUtc.isEmpty) {
-      return 'Published recently';
-    }
-
+  String _formatPublishedDate(BuildContext context) {
+    if (_news?.publishedAtUtc.isEmpty ?? true) return 'Published recently';
     try {
-      final date = DateTime.parse(_news!.publishedAtUtc);
-      final now = DateTime.now();
-      final difference = now.difference(date);
-
-      if (difference.inDays > 0) {
-        return 'Published ${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
-      } else if (difference.inHours > 0) {
-        return 'Published ${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
-      } else if (difference.inMinutes > 0) {
-        return 'Published ${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
-      } else {
-        return 'Published just now';
-      }
-    } catch (e) {
+      final date = DateTime.parse(_news!.publishedAtUtc).toLocal();
+      return 'Published ' + DateLocaleUtils.relativePlusAbsolute(context, date);
+    } catch (_) {
       return 'Published recently';
     }
   }
@@ -584,6 +571,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
                       color: colorScheme.onSurface,
                       height: 1.5,
                     ),
+                    showRuby: ref.watch(furiganaProvider),
                   ),
                 ),
               ],
@@ -608,32 +596,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
     );
   }
 
-  Widget _buildAudioPlayer() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return FloatingActionButton.extended(
-      onPressed: () async {
-        if (_audioPlayer?.playing ?? false) {
-          _audioPlayer?.pause().catchError((error, stackTrace) {
-            ErrorReporter.reportError(error, stackTrace);
-          });
-        } else {
-          _audioPlayer?.play().catchError((error, stackTrace) {
-            ErrorReporter.reportError(error, stackTrace);
-          });
-        }
-
-        setState(() {
-          _isPlaying = _audioPlayer?.playing ?? false;
-        });
-      },
-      backgroundColor: colorScheme.primary,
-      foregroundColor: colorScheme.onPrimary,
-      icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-      label: Text(_isPlaying ? 'Pause' : 'Play Audio'),
-    );
-  }
+  // FAB replaced by persistent mini-player in bottomNavigationBar.
 
   void _disposeTapRecognizers() {
     for (final r in _tapRecognizers) {

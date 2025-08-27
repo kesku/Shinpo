@@ -5,6 +5,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shinpo/error_reporter.dart';
 import 'package:shinpo/model/app_config.dart';
 import 'package:shinpo/providers/theme_provider.dart';
@@ -62,6 +63,15 @@ class NhkNewsEasy extends ConsumerWidget {
           title: '新報',
           debugShowCheckedModeBanner: false,
           themeMode: themeMode,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('ja'),
+          ],
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: lightColorScheme,

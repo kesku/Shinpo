@@ -8,6 +8,7 @@ class RubyTextWidget extends StatelessWidget {
   final int? maxLines;
   final TextOverflow? overflow;
   final TextAlign? textAlign;
+  final bool showRuby;
 
   const RubyTextWidget({
     super.key,
@@ -16,6 +17,7 @@ class RubyTextWidget extends StatelessWidget {
     this.maxLines,
     this.overflow,
     this.textAlign,
+    this.showRuby = true,
   });
 
   @override
@@ -24,7 +26,7 @@ class RubyTextWidget extends StatelessWidget {
     final defaultStyle =
         style ?? theme.textTheme.bodyMedium ?? const TextStyle();
 
-    final spans = _buildSpansFromHtml(text, defaultStyle, theme);
+    final spans = _buildSpansFromHtml(text, defaultStyle, theme, showRuby);
 
     return RichText(
       text: TextSpan(children: spans, style: defaultStyle),
@@ -38,6 +40,7 @@ class RubyTextWidget extends StatelessWidget {
     String htmlSource,
     TextStyle style,
     ThemeData theme,
+    bool showRuby,
   ) {
     final fragment = html.parseFragment(htmlSource);
     final List<InlineSpan> spans = [];
@@ -57,17 +60,25 @@ class RubyTextWidget extends StatelessWidget {
           final base = _extractRubyBase(node).trim();
           final rubies = _extractRubyTexts(node).join(' ');
           if (base.isEmpty) break;
+          if (!showRuby) {
+            spans.add(TextSpan(text: base));
+            break;
+          }
           spans.add(WidgetSpan(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (rubies.isNotEmpty)
-                  Text(
-                    rubies,
-                    style: style.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: (style.fontSize ?? 16) * 0.6,
-                      fontWeight: FontWeight.normal,
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      rubies,
+                      style: style.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: (style.fontSize ?? 16) * 0.6,
+                        height: 1.0,
+                        fontWeight: FontWeight.normal,
+                      ),
                     ),
                   ),
                 Text(base, style: style),

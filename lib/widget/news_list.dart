@@ -6,6 +6,7 @@ import 'package:shinpo/error_reporter.dart';
 import 'package:shinpo/model/news.dart';
 import 'package:shinpo/providers/bookmark_provider.dart';
 import 'package:shinpo/providers/theme_provider.dart';
+import 'package:shinpo/providers/furigana_provider.dart';
 import 'package:shinpo/providers/cache_manager_provider.dart';
 import 'package:shinpo/service/cached_news_service.dart';
 import 'package:shinpo/service/config_service.dart';
@@ -13,7 +14,9 @@ import 'package:shinpo/widget/bookmarks_screen.dart';
 import 'package:shinpo/widget/settings.dart';
 import 'package:shinpo/widget/search_screen.dart';
 import 'package:shinpo/widget/ruby_text_widget.dart';
+import 'package:shinpo/widget/audio_chip.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:shinpo/util/date_locale_utils.dart';
 
 import 'news_detail.dart';
 
@@ -253,10 +256,6 @@ class NewsListState extends ConsumerState<NewsList> {
 
   Widget _buildNewsCard(News news) {
     final publishedDate = DateTime.parse(news.publishedAtUtc).toLocal();
-    final formattedDate =
-        '${publishedDate.month}/${publishedDate.day}/${publishedDate.year}';
-    final formattedTime =
-        '${publishedDate.hour.toString().padLeft(2, '0')}:${publishedDate.minute.toString().padLeft(2, '0')}';
 
     return Consumer(
       builder: (context, ref, child) {
@@ -276,9 +275,11 @@ class NewsListState extends ConsumerState<NewsList> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (news.imageUrl.isNotEmpty)
-                  AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: CachedNetworkImage(
+                  Hero(
+                    tag: news.newsId,
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: CachedNetworkImage(
                       imageUrl: news.imageUrl,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
@@ -297,6 +298,7 @@ class NewsListState extends ConsumerState<NewsList> {
                           Icons.image_not_supported_outlined,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
+                      ),
                       ),
                     ),
                   ),
@@ -319,6 +321,7 @@ class NewsListState extends ConsumerState<NewsList> {
                                   ),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
+                              showRuby: ref.watch(furiganaProvider),
                             ),
                           ),
                           if (isBookmarked)
@@ -344,53 +347,18 @@ class NewsListState extends ConsumerState<NewsList> {
                           ),
                           SizedBox(width: 4),
                           Text(
-                            '$formattedDate $formattedTime',
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
+                            DateLocaleUtils.formatAbsolute(context, publishedDate),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
                           ),
                           Spacer(),
-                          if (news.m3u8Url.isNotEmpty)
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.volume_up_outlined,
-                                    size: 14,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSecondaryContainer,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Audio',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSecondaryContainer,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          if (news.m3u8Url.isNotEmpty) const AudioChip(),
                         ],
                       ),
                     ],

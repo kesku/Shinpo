@@ -7,6 +7,9 @@ import 'package:shinpo/providers/search_provider.dart';
 import 'package:shinpo/widget/news_detail.dart';
 import 'package:shinpo/widget/search_filters.dart';
 import 'package:shinpo/widget/ruby_text_widget.dart';
+import 'package:shinpo/providers/furigana_provider.dart';
+import 'package:shinpo/widget/audio_chip.dart';
+import 'package:shinpo/util/date_locale_utils.dart';
 import 'package:shinpo/util/html_utils.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -371,10 +374,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildSearchResultCard(News news) {
     final publishedDate = DateTime.parse(news.publishedAtUtc).toLocal();
-    final formattedDate =
-        '${publishedDate.month}/${publishedDate.day}/${publishedDate.year}';
-    final formattedTime =
-        '${publishedDate.hour.toString().padLeft(2, '0')}:${publishedDate.minute.toString().padLeft(2, '0')}';
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -424,6 +423,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           fontWeight: FontWeight.w600,
                           height: 1.3,
                         ),
+                    showRuby: ref.watch(furiganaProvider),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -467,7 +467,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        '$formattedDate $formattedTime',
+                        DateLocaleUtils.formatAbsolute(context, publishedDate),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context)
                                   .colorScheme
@@ -475,42 +475,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ),
                       ),
                       Spacer(),
-                      if (news.m3u8Url.isNotEmpty)
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.volume_up_outlined,
-                                size: 14,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSecondaryContainer,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                'Audio',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSecondaryContainer,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      if (news.m3u8Url.isNotEmpty) const AudioChip(),
                     ],
                   ),
                 ],
