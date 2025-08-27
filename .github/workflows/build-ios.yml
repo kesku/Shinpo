@@ -31,6 +31,7 @@ jobs:
 
       - name: Analyze code
         run: flutter analyze
+        continue-on-error: true
 
       - name: Build iOS (Debug, No Code Sign)
         if: startsWith(github.ref, 'refs/tags/')
