@@ -5,7 +5,6 @@ import 'package:shinpo/model/news.dart';
 
 class NewsService {
   Future<List<News>> fetchNewsList(DateTime startDate, DateTime endDate) async {
-    
     if (!_isValidDate(startDate) || !_isValidDate(endDate)) {
       throw Exception('Invalid date provided to API');
     }
@@ -26,7 +25,7 @@ class NewsService {
 
     try {
       final response = await http.get(uri);
-      
+
       if (response.statusCode == 200) {
         final decoder = Utf8Decoder();
         final responseBody = decoder.convert(response.bodyBytes);
@@ -40,32 +39,35 @@ class NewsService {
         return newsList;
       } else {
         if (response.statusCode == 500) {
-          throw Exception('Server temporarily unavailable. Please try again later.');
+          throw Exception(
+              'Server temporarily unavailable. Please try again later.');
         } else if (response.statusCode >= 500) {
-          throw Exception('Server error (${response.statusCode}). Please try again later.');
+          throw Exception(
+              'Server error (${response.statusCode}). Please try again later.');
         } else if (response.statusCode >= 400) {
-          throw Exception('Request error (${response.statusCode}). Please check your connection.');
+          throw Exception(
+              'Request error (${response.statusCode}). Please check your connection.');
         } else {
           throw Exception('Failed to fetch news: HTTP ${response.statusCode}');
         }
       }
     } catch (e) {
-      if (e.toString().contains('SocketException') || e.toString().contains('TimeoutException')) {
-        throw Exception('Network connection failed. Please check your internet connection.');
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('TimeoutException')) {
+        throw Exception(
+            'Network connection failed. Please check your internet connection.');
       } else {
         throw Exception('Failed to fetch news: $e');
       }
     }
   }
 
-  
   bool _isValidDate(DateTime date) {
     try {
-      
       final now = DateTime.now().toUtc();
-      final minDate = DateTime(2020, 1, 1); 
-      final maxDate = now.add(Duration(days: 365)); 
-      
+      final minDate = DateTime(2020, 1, 1);
+      final maxDate = now.add(Duration(days: 365));
+
       return date.isAfter(minDate) && date.isBefore(maxDate);
     } catch (e) {
       print('NewsService: Date validation error: $e');
@@ -75,13 +77,12 @@ class NewsService {
 
   String _formatDateForApi(DateTime date) {
     try {
-      
       final utcDate = date.toUtc();
-      return utcDate.toIso8601String();
+      return utcDate.toIso8601String().substring(0, 23) + 'Z';
     } catch (e) {
       print('NewsService: Date formatting error: $e');
-      
-      return DateTime.now().toUtc().toIso8601String();
+
+      return DateTime.now().toUtc().toIso8601String().substring(0, 23) + 'Z';
     }
   }
 }
