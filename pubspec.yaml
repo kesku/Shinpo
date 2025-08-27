@@ -23,7 +23,7 @@ dependencies:
 
   # UI & Navigation
   cupertino_icons: ^1.0.8
-  dynamic_color: ^1.6.8
+  dynamic_color: 1.6.8
   
   # Networking & Data
   http: ^1.2.2
