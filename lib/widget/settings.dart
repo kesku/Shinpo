@@ -207,7 +207,7 @@ class _SettingsState extends ConsumerState<Settings> {
 
   void _openPrivacyPolicy(BuildContext context) async {
     final url =
-        'https://github.com/kesku/Shinpo/blob/5fe213a96ab6c199e0d73bead4bf60653dd8fb22/privacy_policy.md';
+        'https://github.com/kesku/Shinpo/blob/master/privacy_policy.md';
     final uri = Uri.parse(url);
 
     try {
