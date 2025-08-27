@@ -33,3 +33,19 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag v${{ steps.get_version.outputs.version }}
           git push origin v${{ steps.get_version.outputs.version }}
+
+      - name: Trigger iOS build workflow
+        if: steps.check_tag.outputs.exists == ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: build-ios.yml
+          ref: refs/tags/v${{ steps.get_version.outputs.version }}
+
+      - name: Trigger Android build workflow
+        if: steps.check_tag.outputs.exists == ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: build-android.yml
+          ref: refs/tags/v${{ steps.get_version.outputs.version }}
