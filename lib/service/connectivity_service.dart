@@ -1,4 +1,6 @@
 import 'package:http/http.dart' as http;
+import 'package:shinpo/config/api_config.dart';
+import 'package:shinpo/util/date_formatter.dart';
 
 class ConnectivityService {
   static const List<String> _testUrls = [
@@ -25,15 +27,10 @@ class ConnectivityService {
 
   static Future<bool> isNhkServerReachable() async {
     try {
-      final uri = Uri(
-        scheme: 'https',
-        host: 'nhk.dekiru.app',
-        path: '/news',
-        queryParameters: {
-          'startDate':
-              DateTime.now().subtract(Duration(days: 1)).toIso8601String(),
-          'endDate': DateTime.now().toIso8601String(),
-        },
+      final now = DateTime.now();
+      final uri = ApiConfig.newsUri(
+        startDate: formatDateForApi(now.subtract(const Duration(days: 1))),
+        endDate: formatDateForApi(now),
       );
       final response = await http.get(uri).timeout(const Duration(seconds: 5));
 

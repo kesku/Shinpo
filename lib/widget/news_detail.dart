@@ -11,6 +11,7 @@ import 'package:shinpo/service/word_service.dart';
 import 'package:shinpo/widget/ruby_text_widget.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/gestures.dart';
 
 class NewsDetail extends ConsumerStatefulWidget {
   final News news;
@@ -29,6 +30,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
   Word? _currentWord;
   List<Word> _words = [];
   WordService _wordService = WordService();
+  final List<TapGestureRecognizer> _tapRecognizers = [];
 
   @override
   void initState() {
@@ -347,6 +349,8 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
     final colorScheme = theme.colorScheme;
     final fontScale = ref.watch(fontSizeProvider).scale;
 
+    _disposeTapRecognizers();
+
     final bodyText = _parseHtmlBody(_news!.body);
 
     return Column(
@@ -440,7 +444,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    final List<TextSpan> spans = [];
+    final List<InlineSpan> spans = [];
 
     for (final part in textParts) {
       if (part['type'] == 'text') {
@@ -454,6 +458,9 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
           ),
         );
       } else if (part['type'] == 'dictionary') {
+        final recognizer = TapGestureRecognizer()
+          ..onTap = () => _showWordDefinition(part['id']);
+        _tapRecognizers.add(recognizer);
         spans.add(
           TextSpan(
             text: part['text'],
@@ -463,6 +470,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
               decoration: TextDecoration.underline,
               decorationColor: colorScheme.primary,
             ),
+            recognizer: recognizer,
           ),
         );
       }
@@ -470,19 +478,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
 
     return Padding(
       padding: EdgeInsets.only(bottom: 16),
-      child: GestureDetector(
-        onTapDown: (details) {
-          // Handle tap on dictionary words
-
-          for (final part in textParts) {
-            if (part['type'] == 'dictionary') {
-              _showWordDefinition(part['id']);
-              break;
-            }
-          }
-        },
-        child: RichText(text: TextSpan(children: spans)),
-      ),
+      child: RichText(text: TextSpan(children: spans)),
     );
   }
 
@@ -690,5 +686,18 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
       icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
       label: Text(_isPlaying ? 'Pause' : 'Play Audio'),
     );
+  }
+
+  void _disposeTapRecognizers() {
+    for (final r in _tapRecognizers) {
+      r.dispose();
+    }
+    _tapRecognizers.clear();
+  }
+
+  @override
+  void dispose() {
+    _disposeTapRecognizers();
+    super.dispose();
   }
 }

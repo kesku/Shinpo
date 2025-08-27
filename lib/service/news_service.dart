@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:shinpo/model/news.dart';
+import 'package:shinpo/config/api_config.dart';
+import 'package:shinpo/util/date_formatter.dart';
 
 class NewsService {
   Future<List<News>> fetchNewsList(DateTime startDate, DateTime endDate) async {
@@ -13,14 +15,9 @@ class NewsService {
       throw Exception('Start date cannot be after end date');
     }
 
-    final uri = Uri(
-      scheme: 'https',
-      host: 'nhk.dekiru.app',
-      path: 'news',
-      queryParameters: {
-        'startDate': _formatDateForApi(startDate),
-        'endDate': _formatDateForApi(endDate),
-      },
+    final uri = ApiConfig.newsUri(
+      startDate: formatDateForApi(startDate),
+      endDate: formatDateForApi(endDate),
     );
 
     try {
@@ -75,14 +72,4 @@ class NewsService {
     }
   }
 
-  String _formatDateForApi(DateTime date) {
-    try {
-      final utcDate = date.toUtc();
-      return utcDate.toIso8601String().substring(0, 23) + 'Z';
-    } catch (e) {
-      print('NewsService: Date formatting error: $e');
-
-      return DateTime.now().toUtc().toIso8601String().substring(0, 23) + 'Z';
-    }
-  }
 }
