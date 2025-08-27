@@ -29,7 +29,6 @@ class NewsDetail extends ConsumerStatefulWidget {
 
 class NewsDetailState extends ConsumerState<NewsDetail> {
   News? _news;
-  bool _isPlaying = false;
   AudioPlayer? _audioPlayer;
   bool _showDictionary = false;
   Word? _currentWord;

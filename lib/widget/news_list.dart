@@ -5,7 +5,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shinpo/error_reporter.dart';
 import 'package:shinpo/model/news.dart';
 import 'package:shinpo/providers/bookmark_provider.dart';
-import 'package:shinpo/providers/theme_provider.dart';
 import 'package:shinpo/providers/furigana_provider.dart';
 import 'package:shinpo/providers/cache_manager_provider.dart';
 import 'package:shinpo/service/cached_news_service.dart';
@@ -40,7 +39,6 @@ class NewsListState extends ConsumerState<NewsList> {
 
   @override
   Widget build(BuildContext context) {
-    final themeNotifier = ref.read(themeModeProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
     final cachedNews = ref.watch(cachedNewsProvider);
     final isOffline = ref.watch(offlineModeProvider);
@@ -85,67 +83,20 @@ class NewsListState extends ConsumerState<NewsList> {
             },
             tooltip: 'Search articles',
           ),
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert),
-            tooltip: 'More options',
-            onSelected: (value) {
-              switch (value) {
-                case 'theme':
-                  themeNotifier.toggleTheme();
-                  break;
-                case 'bookmarks':
-                  _openBookmarks();
-                  break;
-                case 'settings':
-                  _openSettings();
-                  break;
-                case 'refresh_cache':
-                  _forceCacheRefresh();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'refresh_cache',
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh),
-                    SizedBox(width: 12),
-                    Text('Refresh Cache'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'theme',
-                child: Row(
-                  children: [
-                    Icon(Icons.palette_outlined),
-                    SizedBox(width: 12),
-                    Text('Theme: ${themeNotifier.currentThemeName}'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'bookmarks',
-                child: Row(
-                  children: [
-                    Icon(Icons.bookmark_border),
-                    SizedBox(width: 12),
-                    Text('Bookmarks'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings_outlined),
-                    SizedBox(width: 12),
-                    Text('Settings'),
-                  ],
-                ),
-              ),
-            ],
+          IconButton(
+            icon: Icon(Icons.bookmark_border),
+            onPressed: _openBookmarks,
+            tooltip: 'Bookmarks',
+          ),
+          IconButton(
+            icon: Icon(Icons.sync),
+            onPressed: _forceCacheRefresh,
+            tooltip: 'Refresh cache',
+          ),
+          IconButton(
+            icon: Icon(Icons.settings_outlined),
+            onPressed: _openSettings,
+            tooltip: 'Settings',
           ),
         ],
       ),

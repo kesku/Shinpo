@@ -44,9 +44,9 @@ class _SettingsState extends ConsumerState<Settings> {
           SettingsSection(
             title: Text('Appearance'),
             tiles: [
-              SettingsTile(
+              SettingsTile.navigation(
                 title: Text('Theme'),
-                description: Text('Current: ${themeNotifier.currentThemeName}'),
+                value: Text(themeNotifier.currentThemeName),
                 leading: Icon(Icons.palette_outlined),
                 onPressed: (context) => _showThemeDialog(context, ref),
               ),
@@ -55,7 +55,7 @@ class _SettingsState extends ConsumerState<Settings> {
           SettingsSection(
             title: Text('Reading'),
             tiles: [
-              SettingsTile(
+              SettingsTile.navigation(
                 title: Text('Text Size'),
                 description: Text('Adjust font size for better reading'),
                 leading: Icon(Icons.text_fields),
@@ -66,7 +66,7 @@ class _SettingsState extends ConsumerState<Settings> {
                   );
                 },
               ),
-              SettingsTile(
+              SettingsTile.navigation(
                 title: Text('Reading History'),
                 description: Text('View your reading progress'),
                 leading: Icon(Icons.history),
@@ -83,28 +83,35 @@ class _SettingsState extends ConsumerState<Settings> {
           SettingsSection(
             title: Text('Cache & Storage'),
             tiles: [
-              SettingsTile(
+              SettingsTile.navigation(
                 title: Text('Cache Status'),
                 description: Text('View cache information'),
                 leading: Icon(Icons.info_outline),
                 onPressed: (context) => _showCacheStatus(context, ref),
               ),
-              SettingsTile(
+              SettingsTile.navigation(
                 title: Text('Refresh Cache'),
                 description: Text('Download latest articles'),
-                leading: Icon(Icons.refresh),
+                leading: Icon(Icons.sync),
                 onPressed: (context) => _refreshCache(context, ref),
               ),
-              SettingsTile(
+              SettingsTile.navigation(
                 title: Text('Optimize Cache'),
                 description: Text('Clean up and validate cache'),
-                leading: Icon(Icons.cleaning_services),
+                leading: Icon(Icons.cleaning_services_outlined),
                 onPressed: (context) => _optimizeCache(context, ref),
               ),
-              SettingsTile(
-                title: Text('Clear Cache'),
+              SettingsTile.navigation(
+                title: Text(
+                  'Clear Cache',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 description: Text('Free up storage space'),
-                leading: Icon(Icons.storage),
+                leading: Icon(Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.error),
                 onPressed: _clearCache,
               ),
             ],
@@ -112,17 +119,18 @@ class _SettingsState extends ConsumerState<Settings> {
           SettingsSection(
             title: Text('About'),
             tiles: [
-              SettingsTile(
+              SettingsTile.navigation(
                 title: Text('Privacy Policy'),
-                leading: Icon(Icons.description),
+                leading: Icon(Icons.description_outlined),
                 onPressed: _openPrivacyPolicy,
               ),
               SettingsTile(
                 title: Text('Version'),
-                description: Text(
-                    _packageInfo != null 
-                        ? '${_packageInfo!.version}+${_packageInfo!.buildNumber}'
-                        : 'Loading...'),
+                value: Text(
+                  _packageInfo != null
+                      ? '${_packageInfo!.version}+${_packageInfo!.buildNumber}'
+                      : 'Loading...',
+                ),
                 leading: Icon(Icons.info_outline),
               ),
             ],
