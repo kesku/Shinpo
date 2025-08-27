@@ -27,6 +27,15 @@ devtools_options.yaml
 .pub/
 /build/
 
+# Android related
+.gradle/
+android/app/.cxx/
+android/app/build/
+android/app/src/main/assets/
+android/app/src/main/res/
+android/app/src/main/res/values/
+android/app/src/main/res/values-v21/
+
 # Web related
 lib/generated_plugin_registrant.dart
 
