@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shinpo/error_reporter.dart';
 import 'package:shinpo/providers/theme_provider.dart';
 import 'package:shinpo/providers/cache_manager_provider.dart';
@@ -10,11 +11,30 @@ import 'package:shinpo/widget/reading_history_screen.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class Settings extends ConsumerWidget {
+class Settings extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<Settings> createState() => _SettingsState();
+}
+
+class _SettingsState extends ConsumerState<Settings> {
   final _baseRepository = BaseRepository();
+  PackageInfo? _packageInfo;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _loadPackageInfo();
+  }
+
+  Future<void> _loadPackageInfo() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _packageInfo = packageInfo;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeNotifier = ref.read(themeModeProvider.notifier);
 
     return Scaffold(
@@ -95,7 +115,10 @@ class Settings extends ConsumerWidget {
               ),
               SettingsTile(
                 title: Text('Version'),
-                description: Text('1.6.0+1'),
+                description: Text(
+                    _packageInfo != null 
+                        ? '${_packageInfo!.version}+${_packageInfo!.buildNumber}'
+                        : 'Loading...'),
                 leading: Icon(Icons.info_outline),
               ),
             ],
@@ -184,9 +207,8 @@ class Settings extends ConsumerWidget {
 
   void _openPrivacyPolicy(BuildContext context) async {
     final url =
-        'https://github.com/nhk-news-web-easy/nhk-easy-mobile-privacy-policy';
-    final uri = Uri.https(
-        'github.com', '/nhk-news-web-easy/nhk-easy-mobile-privacy-policy');
+        'https://github.com/kesku/Shinpo/blob/5fe213a96ab6c199e0d73bead4bf60653dd8fb22/privacy_policy.md';
+    final uri = Uri.parse(url);
 
     try {
       await launchUrl(uri);
