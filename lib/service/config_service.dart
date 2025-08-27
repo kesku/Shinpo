@@ -14,4 +14,25 @@ class ConfigService {
 
     return null;
   }
+
+  Future<void> saveConfig(Config config) async {
+    try {
+      await _configRepository.save(config);
+    } catch (error, stackTrace) {
+      ErrorReporter.reportError(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> clearConfig() async {
+    try {
+      final configs = await _configRepository.getConfigs();
+      for (final config in configs) {
+        await _configRepository.delete(config.id);
+      }
+    } catch (error, stackTrace) {
+      ErrorReporter.reportError(error, stackTrace);
+      rethrow;
+    }
+  }
 }

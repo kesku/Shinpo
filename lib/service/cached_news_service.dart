@@ -13,6 +13,17 @@ class CachedNewsService {
   final _newsService = NewsService();
 
   Future<List<News>> fetchNewsList(DateTime startDate, DateTime endDate) async {
+    
+    if (!_isValidDate(startDate) || !_isValidDate(endDate)) {
+      print('CachedNewsService: Invalid dates provided, returning empty list');
+      return [];
+    }
+
+    if (startDate.isAfter(endDate)) {
+      print('CachedNewsService: Start date after end date, returning empty list');
+      return [];
+    }
+
     final config = await _configService.getConfig();
 
     if (config != null && (_newsCached(config, startDate, endDate))) {
@@ -53,11 +64,16 @@ class CachedNewsService {
   }
 
   bool _newsCached(Config config, DateTime startDate, DateTime endDate) {
-    final newsFetchedStartDate = DateTime.parse(config.newsFetchedStartUtc);
-    final newsFetchedEndDate = DateTime.parse(config.newsFetchedEndUtc);
+    try {
+      final newsFetchedStartDate = DateTime.parse(config.newsFetchedStartUtc);
+      final newsFetchedEndDate = DateTime.parse(config.newsFetchedEndUtc);
 
-    return newsFetchedStartDate.compareTo(startDate) <= 0 &&
-        newsFetchedEndDate.compareTo(endDate) >= 0;
+      return newsFetchedStartDate.compareTo(startDate) <= 0 &&
+          newsFetchedEndDate.compareTo(endDate) >= 0;
+    } catch (e) {
+      print('CachedNewsService: Error parsing config dates: $e');
+      return false;
+    }
   }
 
   Config _createNewConfig(
@@ -65,6 +81,15 @@ class CachedNewsService {
     String newsFetchedStartUtc,
     String newsFetchedEndUtc,
   ) {
+    
+    if (!_isValidDateString(newsFetchedStartUtc) || !_isValidDateString(newsFetchedEndUtc)) {
+      print('CachedNewsService: Invalid date strings in config creation');
+      
+      final now = DateTime.now().toUtc();
+      newsFetchedStartUtc = now.toIso8601String();
+      newsFetchedEndUtc = now.toIso8601String();
+    }
+
     if (config != null) {
       final newsFetchedStartUtcNew = DateTime.parse(
                 newsFetchedStartUtc,
@@ -108,6 +133,31 @@ class CachedNewsService {
     } catch (error, stackTrace) {
       ErrorReporter.reportError(error, stackTrace);
       return null;
+    }
+  }
+
+  
+  bool _isValidDate(DateTime date) {
+    try {
+      
+      final now = DateTime.now().toUtc();
+      final minDate = DateTime(2020, 1, 1); 
+      final maxDate = now.add(Duration(days: 365)); 
+      
+      return date.isAfter(minDate) && date.isBefore(maxDate);
+    } catch (e) {
+      print('CachedNewsService: Date validation error: $e');
+      return false;
+    }
+  }
+
+  bool _isValidDateString(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      return _isValidDate(date);
+    } catch (e) {
+      print('CachedNewsService: Invalid date string: $dateString');
+      return false;
     }
   }
 }

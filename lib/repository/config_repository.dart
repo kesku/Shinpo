@@ -26,4 +26,14 @@ class ConfigRepository extends BaseRepository {
 
     await _configStore.record(config.id).put(database, config.toMap());
   }
+
+  Future<void> delete(int id) async {
+    final database = await getDatabase();
+    await _configStore.record(id).delete(database);
+  }
+
+  Future<void> clearAll() async {
+    final database = await getDatabase();
+    await _configStore.delete(database);
+  }
 }

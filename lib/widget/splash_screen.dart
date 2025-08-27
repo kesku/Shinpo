@@ -3,9 +3,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shinpo/providers/cache_manager_provider.dart';
 import 'package:shinpo/widget/news_list.dart';
 
-class SplashScreen extends ConsumerWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _optimizationComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _performCacheOptimization();
+  }
+
+  Future<void> _performCacheOptimization() async {
+    try {
+      
+      final cacheManager = ref.read(cacheManagerServiceProvider);
+      await cacheManager.optimizeCache();
+    } catch (e) {
+      
+      print('Cache optimization failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _optimizationComplete = true;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cacheInitialization = ref.watch(cacheInitializationProvider);
     final isOffline = ref.watch(offlineModeProvider);
 
@@ -39,50 +69,62 @@ class SplashScreen extends ConsumerWidget {
             SizedBox(height: 16),
             cacheInitialization.when(
               data: (news) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => NewsList()),
-                  );
-                });
+                if (_optimizationComplete) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => NewsList()),
+                    );
+                  });
+                }
                 return _buildLoadingContent(
                   context,
-                  'Loading complete!',
-                  Icons.check_circle_outline,
-                  Colors.green,
+                  _optimizationComplete ? 'Loading complete!' : 'Optimizing cache...',
+                  _optimizationComplete ? Icons.check_circle_outline : null,
+                  _optimizationComplete ? Colors.green : null,
                 );
               },
               loading: () => _buildLoadingContent(
                 context,
-                'Loading news articles...',
+                _optimizationComplete ? 'Loading news articles...' : 'Optimizing cache...',
                 null,
                 null,
               ),
               error: (error, stackTrace) {
+                if (_optimizationComplete) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => NewsList()),
+                    );
+                  });
+                }
                 return Column(
                   children: [
                     _buildLoadingContent(
                       context,
-                      'Loading from cache...',
-                      Icons.cloud_off_outlined,
-                      Colors.orange,
+                      _optimizationComplete ? 'Loading from cache...' : 'Optimizing cache...',
+                      _optimizationComplete ? Icons.cloud_off_outlined : null,
+                      _optimizationComplete ? Colors.orange : null,
                     ),
                     SizedBox(height: 16),
-                    isOffline ? _buildOfflineIndicator(context) : Container(),
+                    if (_optimizationComplete && isOffline) 
+                      _buildOfflineIndicator(context),
                     SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => NewsList()),
-                        );
-                      },
-                      child: Text('Continue'),
-                    ),
+                    if (_optimizationComplete)
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (context) => NewsList()),
+                          );
+                        },
+                        child: Text('Continue'),
+                      ),
                   ],
                 );
               },
             ),
             SizedBox(height: 24),
-            isOffline ? _buildOfflineIndicator(context) : Container(),
+            if (_optimizationComplete && isOffline) 
+              _buildOfflineIndicator(context),
           ],
         ),
       ),

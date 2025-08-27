@@ -5,7 +5,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shinpo/error_reporter.dart';
 import 'package:shinpo/providers/theme_provider.dart';
 import 'package:shinpo/providers/cache_manager_provider.dart';
-import 'package:shinpo/repository/base_repository.dart';
 import 'package:shinpo/widget/font_size_dialog.dart';
 import 'package:shinpo/widget/reading_history_screen.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -17,7 +16,6 @@ class Settings extends ConsumerStatefulWidget {
 }
 
 class _SettingsState extends ConsumerState<Settings> {
-  final _baseRepository = BaseRepository();
   PackageInfo? _packageInfo;
 
   @override
@@ -98,6 +96,12 @@ class _SettingsState extends ConsumerState<Settings> {
                 onPressed: (context) => _refreshCache(context, ref),
               ),
               SettingsTile(
+                title: Text('Optimize Cache'),
+                description: Text('Clean up and validate cache'),
+                leading: Icon(Icons.cleaning_services),
+                onPressed: (context) => _optimizeCache(context, ref),
+              ),
+              SettingsTile(
                 title: Text('Clear Cache'),
                 description: Text('Free up storage space'),
                 leading: Icon(Icons.storage),
@@ -170,20 +174,26 @@ class _SettingsState extends ConsumerState<Settings> {
         'Yes',
         style: TextStyle(color: Colors.red),
       ),
-      onPressed: () {
-        _baseRepository.dropDatabase().then((value) {
-          Navigator.pop(context);
-
+      onPressed: () async {
+        Navigator.pop(context);
+        
+        try {
+          final cacheManager = ref.read(cacheManagerServiceProvider);
+          await cacheManager.clearAllCache();
+          
+          
+          ref.invalidate(cachedNewsProvider);
+          ref.invalidate(cacheStatusProvider);
+          ref.invalidate(cacheInitializationProvider);
+          
           Fluttertoast.showToast(
               msg: 'Cache removed', gravity: ToastGravity.CENTER);
-        }).catchError((error, stackTrace) {
-          Navigator.pop(context);
-
+        } catch (error, stackTrace) {
           Fluttertoast.showToast(
               msg: 'Failed to remove cache', gravity: ToastGravity.CENTER);
 
           ErrorReporter.reportError(error, stackTrace);
-        });
+        }
       },
     );
     final noButton = TextButton(
@@ -243,30 +253,70 @@ class _SettingsState extends ConsumerState<Settings> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Cache Status'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStatusRow(
-                'Initialized', cacheStatus['initialized'].toString()),
-            SizedBox(height: 8),
-            _buildStatusRow(
-                'Articles Cached', cacheStatus['articleCount'].toString()),
-            SizedBox(height: 8),
-            _buildStatusRow(
-                'Last Updated',
-                cacheStatus['lastUpdate'] != null
-                    ? _formatDateTime(cacheStatus['lastUpdate'])
-                    : 'Never'),
-            SizedBox(height: 8),
-            _buildStatusRow('Internet Connection',
-                cacheStatus['hasInternetConnection'] ? 'Available' : 'Offline'),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStatusRow(
+                  'Initialized', cacheStatus['initialized'].toString()),
+              SizedBox(height: 8),
+              _buildStatusRow(
+                  'Articles Cached', cacheStatus['articleCount'].toString()),
+              SizedBox(height: 8),
+              _buildStatusRow(
+                  'Cache Size', cacheStatus['cacheSize'].toString()),
+              SizedBox(height: 8),
+              _buildStatusRow(
+                  'Cache Valid', cacheStatus['isValid'].toString()),
+              SizedBox(height: 8),
+              if (cacheStatus['hitRate'] != null)
+                _buildStatusRow(
+                    'Cache Hit Rate', '${cacheStatus['hitRate'].toStringAsFixed(1)}%'),
+              SizedBox(height: 8),
+              if (cacheStatus['totalRequests'] != null && cacheStatus['totalRequests'] > 0)
+                _buildStatusRow(
+                    'Total Requests', cacheStatus['totalRequests'].toString()),
+              SizedBox(height: 8),
+              _buildStatusRow(
+                  'Last Updated',
+                  cacheStatus['lastUpdate'] != null
+                      ? _formatDateTime(cacheStatus['lastUpdate'])
+                      : 'Never'),
+              SizedBox(height: 8),
+              if (cacheStatus['ageInDays'] != null)
+                _buildStatusRow(
+                    'Cache Age', '${cacheStatus['ageInDays']} days'),
+              SizedBox(height: 8),
+              if (cacheStatus['oldestDate'] != null)
+                _buildStatusRow(
+                    'Oldest Article',
+                    _formatDateTime(cacheStatus['oldestDate'])),
+              SizedBox(height: 8),
+              if (cacheStatus['newestDate'] != null)
+                _buildStatusRow(
+                    'Newest Article',
+                    _formatDateTime(cacheStatus['newestDate'])),
+              SizedBox(height: 8),
+              _buildStatusRow('Internet Connection',
+                  cacheStatus['hasInternetConnection'] ? 'Available' : 'Offline'),
+              SizedBox(height: 8),
+              _buildStatusRow('NHK Server',
+                  cacheStatus['nhkServerReachable'] ? 'Reachable' : 'Unreachable'),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text('OK'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _optimizeCache(context, ref);
+            },
+            child: Text('Optimize'),
           ),
         ],
       ),
@@ -334,6 +384,53 @@ class _SettingsState extends ConsumerState<Settings> {
         builder: (context) => AlertDialog(
           title: Text('Error'),
           content: Text('Failed to refresh cache: ${error.toString()}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _optimizeCache(BuildContext context, WidgetRef ref) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Optimizing cache...'),
+            ],
+          ),
+        ),
+      );
+
+      await ref.read(cachedNewsProvider.notifier).optimizeCache();
+
+      if (!context.mounted) return;
+
+      Navigator.of(context).pop();
+
+      Fluttertoast.showToast(
+        msg: 'Cache optimized successfully',
+        gravity: ToastGravity.CENTER,
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      Navigator.of(context).pop();
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Error'),
+          content: Text('Failed to optimize cache: ${error.toString()}'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

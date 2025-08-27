@@ -175,16 +175,28 @@ class NewsListState extends ConsumerState<NewsList> {
               ),
               SizedBox(height: 8),
               Text(
-                error.toString(),
+                _getErrorMessage(error),
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.read(cachedNewsProvider.notifier).loadAllCachedNews();
-                },
-                child: Text('Retry'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.read(cachedNewsProvider.notifier).loadAllCachedNews();
+                    },
+                    child: Text('Load Cached'),
+                  ),
+                  SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.read(cachedNewsProvider.notifier).refreshCache();
+                    },
+                    child: Text('Retry'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -493,8 +505,60 @@ class NewsListState extends ConsumerState<NewsList> {
     }
   }
 
-  void _forceCacheRefresh() {
-    ref.read(cachedNewsProvider.notifier).refreshCache();
+  void _forceCacheRefresh() async {
+    try {
+      
+      ref.read(cachedNewsProvider.notifier).state = const AsyncValue.loading();
+      
+      
+      await ref.read(cachedNewsProvider.notifier).refreshCache();
+      
+      
+      Fluttertoast.showToast(
+        msg: 'Cache refreshed successfully',
+        gravity: ToastGravity.CENTER,
+      );
+    } catch (error) {
+      
+      final errorString = error.toString();
+      String message = 'Failed to refresh cache';
+      
+      if (errorString.contains('Server temporarily unavailable') || 
+          errorString.contains('Server error') ||
+          errorString.contains('HTTP 500')) {
+        message = 'Server is temporarily unavailable. Using cached data.';
+      } else if (errorString.contains('Network connection failed') ||
+                 errorString.contains('SocketException') ||
+                 errorString.contains('TimeoutException')) {
+        message = 'Network connection failed. Using cached data.';
+      }
+      
+      Fluttertoast.showToast(
+        msg: message,
+        gravity: ToastGravity.CENTER,
+      );
+      
+      
+      await ref.read(cachedNewsProvider.notifier).loadAllCachedNews();
+    }
+  }
+
+  String _getErrorMessage(dynamic error) {
+    final errorString = error.toString();
+    
+    if (errorString.contains('Server temporarily unavailable')) {
+      return 'The news server is temporarily unavailable.\nPlease try again later.';
+    } else if (errorString.contains('Server error')) {
+      return 'The news server is experiencing issues.\nPlease try again later.';
+    } else if (errorString.contains('Network connection failed')) {
+      return 'Unable to connect to the internet.\nPlease check your connection and try again.';
+    } else if (errorString.contains('Request error')) {
+      return 'There was an issue with the request.\nPlease check your connection.';
+    } else if (errorString.contains('HTTP 500')) {
+      return 'Server error occurred.\nPlease try again later.';
+    } else {
+      return 'An unexpected error occurred.\nPlease try again.';
+    }
   }
 
   void _openSettings() {

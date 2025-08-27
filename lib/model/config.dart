@@ -17,6 +17,17 @@ class Config {
     config.newsFetchedStartUtc = json['newsFetchedStartUtc'];
     config.newsFetchedEndUtc = json['newsFetchedEndUtc'];
 
+    
+    if (!config._isValidDateString(config.newsFetchedStartUtc)) {
+      print('Config.fromJson: Invalid start date: ${config.newsFetchedStartUtc}');
+      config.newsFetchedStartUtc = DateTime.now().toUtc().toIso8601String();
+    }
+    
+    if (!config._isValidDateString(config.newsFetchedEndUtc)) {
+      print('Config.fromJson: Invalid end date: ${config.newsFetchedEndUtc}');
+      config.newsFetchedEndUtc = DateTime.now().toUtc().toIso8601String();
+    }
+
     return config;
   }
 
@@ -26,5 +37,35 @@ class Config {
       'newsFetchedStartUtc': newsFetchedStartUtc,
       'newsFetchedEndUtc': newsFetchedEndUtc
     };
+  }
+
+  
+  bool isValid() {
+    return _isValidDateString(newsFetchedStartUtc) && 
+           _isValidDateString(newsFetchedEndUtc) &&
+           _isValidDateRange();
+  }
+
+  bool _isValidDateString(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      final now = DateTime.now().toUtc();
+      final minDate = DateTime(2020, 1, 1);
+      final maxDate = now.add(Duration(days: 365));
+      
+      return date.isAfter(minDate) && date.isBefore(maxDate);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  bool _isValidDateRange() {
+    try {
+      final startDate = DateTime.parse(newsFetchedStartUtc);
+      final endDate = DateTime.parse(newsFetchedEndUtc);
+      return startDate.isBefore(endDate) || startDate.isAtSameMomentAs(endDate);
+    } catch (e) {
+      return false;
+    }
   }
 }

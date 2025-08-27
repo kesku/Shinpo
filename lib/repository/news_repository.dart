@@ -49,4 +49,61 @@ class NewsRepository extends BaseRepository {
     }
     return null;
   }
+
+  
+  Future<void> deleteNewsBefore(DateTime cutoffDate) async {
+    final database = await getDatabase();
+    final finder = Finder(
+      filter: Filter.lessThan(
+        'publishedAtEpoch',
+        cutoffDate.millisecondsSinceEpoch,
+      ),
+    );
+    
+    await _newsStore.delete(database, finder: finder);
+  }
+
+  Future<void> deleteNewsOlderThanDays(int days) async {
+    final cutoffDate = DateTime.now().subtract(Duration(days: days));
+    await deleteNewsBefore(cutoffDate);
+  }
+
+  Future<int> getCacheSize() async {
+    final database = await getDatabase();
+    final count = await _newsStore.count(database);
+    return count;
+  }
+
+  Future<DateTime?> getOldestArticleDate() async {
+    final database = await getDatabase();
+    final finder = Finder(
+      sortOrders: [SortOrder('publishedAtEpoch')],
+    );
+    
+    final records = await _newsStore.find(database, finder: finder);
+    if (records.isNotEmpty) {
+      final news = News.fromJson(records.first.value);
+      return DateTime.fromMillisecondsSinceEpoch(news.publishedAtEpoch);
+    }
+    return null;
+  }
+
+  Future<DateTime?> getNewestArticleDate() async {
+    final database = await getDatabase();
+    final finder = Finder(
+      sortOrders: [SortOrder('publishedAtEpoch', false)], 
+    );
+    
+    final records = await _newsStore.find(database, finder: finder);
+    if (records.isNotEmpty) {
+      final news = News.fromJson(records.first.value);
+      return DateTime.fromMillisecondsSinceEpoch(news.publishedAtEpoch);
+    }
+    return null;
+  }
+
+  Future<void> clearAllNews() async {
+    final database = await getDatabase();
+    await _newsStore.delete(database);
+  }
 }
