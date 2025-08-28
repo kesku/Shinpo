@@ -1,29 +1,59 @@
-# 新報 (Shinpo)
+# Shinpo (新報) 
 
-An unofficial client for [NHK News Web Easy](https://www3.nhk.or.jp/news/easy/).
+<div align="center">
+
+**Unofficial Flutter client for NHK News Web Easy**  
+
+<img src="./images/icon.png" alt="App Icon" width="60"/>
+
+[Features](#features) • [Screenshots](#screenshots) • [Privacy](#privacy) • [Contributing](#contributing)
+
+</div>
+
+
 
 ## Features
 
-- **News Reading**:
-  - Ruby text support (furigana annotations) for Japanese text
-- **Search Functionality**: Comprehensive search through articles by title and content
-  - Real-time search with debouncing
-  - Search suggestions based on article titles
-  - Date range filtering with calendar picker
-- **Bookmarks**: Save and manage your favorite articles
-- **Reading History**: Track your reading progress
-  - Automatic history tracking
-  - Clear history option
-  - View previously read articles
-- **Audio TTS for articles**
-- **Offline Reading**: Cached articles for offline access
+### Reading Experience
+- Furigana Support - Ruby annotations for kanji to help learners
+- Audio Playback - Listen to articles with text-to-speech
+- Offline Reading - Cache articles for reading without internet
+- Font Size Control - Adjustable text size for comfortable reading
+
+### Search
+- Live Search - Real-time results with debounced input
+- Advanced Filtering - Date range selection with calendar picker
+- Search Suggestions - Autocomplete and history
+
+### Personal Library
+- Bookmarks - Save and organize favorite articles
+- Reading History - Automatic tracking with easy access
 
 ## Screenshots
 
-<p align="center">
-  <img src="./screenshots/home.png" alt="home" width="45%" style="display:inline-block; margin-right:10px;"/>
-  <img src="./screenshots/news.png" alt="news" width="45%" style="display:inline-block;"/>
-</p>
+<div align="center">
+<table>
+  <tr>
+    <td align="center">
+      <img src="./images/home_android.png" alt="Home Screen - Android" width="200"/>
+    </td>
+    <td align="center">
+      <img src="./images/settings_android.png" alt="Settings - Android" width="200"/>
+    </td>
+    <td align="center">
+      <img src="./images/article_android.png" alt="Article - Android" width="200"/>
+    </td>
+  </tr>
+</table>
+</div>
 
-## License
-[MIT](LICENSE)
+## Acknowledgements
+
+- NHK News Web Easy - For providing the news content
+- [Frederick-S/Xiaodan Mao](https://github.com/nhk-news-web-easy/nhk-easy-mobile/) - Creator of original repo
+
+<div align="center">
+
+[Privacy Policy](./privacy_policy.md) • [License](LICENSE)
+
+</div>
