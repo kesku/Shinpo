@@ -49,9 +49,3 @@
 
 - [NHK News Web Easy](https://www3.nhk.or.jp/news/easy/) - For providing the news content
 - [Frederick-S/Xiaodan Mao](https://github.com/nhk-news-web-easy/nhk-easy-mobile/) - Creator of original repo
-
-<div align="center">
-
-[Privacy Policy](./privacy_policy.md) • [License](LICENSE)
-
-</div>
