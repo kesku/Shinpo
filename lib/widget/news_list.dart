@@ -16,6 +16,7 @@ import 'package:shinpo/widget/ruby_text_widget.dart';
 import 'package:shinpo/widget/audio_chip.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shinpo/util/date_locale_utils.dart';
+import 'package:shinpo/util/navigation.dart';
 
 import 'news_detail.dart';
 
@@ -78,7 +79,7 @@ class NewsListState extends ConsumerState<NewsList> {
             icon: Icon(Icons.search),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (context) => SearchScreen()),
+                platformPageRoute<void>(builder: (context) => SearchScreen()),
               );
             },
             tooltip: 'Search articles',
@@ -219,7 +220,7 @@ class NewsListState extends ConsumerState<NewsList> {
           child: InkWell(
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (context) => NewsDetail(news)),
+                platformPageRoute<void>(builder: (context) => NewsDetail(news)),
               );
             },
             child: Column(
@@ -477,7 +478,7 @@ class NewsListState extends ConsumerState<NewsList> {
 
   void _openSettings() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
+      platformPageRoute<void>(
         builder: (BuildContext context) {
           return Settings();
         },
@@ -487,7 +488,7 @@ class NewsListState extends ConsumerState<NewsList> {
 
   void _openBookmarks() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
+      platformPageRoute<void>(
         builder: (BuildContext context) {
           return BookmarksScreen();
         },

@@ -11,6 +11,7 @@ import 'package:shinpo/providers/furigana_provider.dart';
 import 'package:shinpo/widget/audio_chip.dart';
 import 'package:shinpo/util/date_locale_utils.dart';
 import 'package:shinpo/util/html_utils.dart';
+import 'package:shinpo/util/navigation.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   @override
@@ -381,7 +382,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
-            MaterialPageRoute<void>(
+            platformPageRoute<void>(
               builder: (context) => NewsDetail(news),
             ),
           );

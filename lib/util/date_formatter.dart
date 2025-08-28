@@ -1,5 +1,3 @@
-/// Formats dates for the NHK API with millisecond precision in UTC.
-/// Example: YYYY-MM-DDTHH:MM:SS.sssZ
 String formatDateForApi(DateTime date) {
   final d = date.toUtc();
 

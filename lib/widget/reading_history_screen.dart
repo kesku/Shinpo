@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shinpo/providers/reading_history_provider.dart';
 import 'package:shinpo/service/cached_news_service.dart';
 import 'package:shinpo/widget/news_detail.dart';
+import 'package:shinpo/util/navigation.dart';
 
 class ReadingHistoryScreen extends ConsumerWidget {
   const ReadingHistoryScreen({super.key});
@@ -181,7 +182,7 @@ class ReadingHistoryScreen extends ConsumerWidget {
 
       if (news != null) {
         Navigator.of(context).push(
-          MaterialPageRoute<void>(
+          platformPageRoute<void>(
             builder: (context) => NewsDetail(news),
           ),
         );

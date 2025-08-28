@@ -8,6 +8,7 @@ import 'package:shinpo/service/cached_news_service.dart';
 import 'package:shinpo/widget/news_detail.dart';
 import 'package:shinpo/widget/ruby_text_widget.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:shinpo/util/navigation.dart';
 
 class BookmarksScreen extends ConsumerStatefulWidget {
   @override
@@ -217,7 +218,7 @@ class BookmarksScreenState extends ConsumerState<BookmarksScreen> {
             child: InkWell(
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute<void>(
+                  platformPageRoute<void>(
                     builder: (context) => NewsDetail(news),
                   ),
                 );

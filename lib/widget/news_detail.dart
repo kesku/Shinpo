@@ -96,12 +96,12 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             ),
           ),
           actions: [
-            // Furigana visibility toggle
             Consumer(builder: (context, ref, _) {
               final visible = ref.watch(furiganaProvider);
               return IconButton(
                 tooltip: visible ? 'Hide furigana' : 'Show furigana',
-                icon: Icon(visible ? Icons.text_fields : Icons.text_fields_outlined,
+                icon: Icon(
+                    visible ? Icons.text_fields : Icons.text_fields_outlined,
                     color: colorScheme.onSurface),
                 onPressed: () => ref.read(furiganaProvider.notifier).toggle(),
               );
@@ -212,8 +212,9 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             if (_showDictionary) _buildDictionary(),
           ],
         ),
-        bottomNavigationBar:
-            _hasAudio() && _audioPlayer != null ? AudioMiniPlayer(player: _audioPlayer!) : null,
+        bottomNavigationBar: _hasAudio() && _audioPlayer != null
+            ? AudioMiniPlayer(player: _audioPlayer!)
+            : null,
       ),
     );
   }
@@ -237,8 +238,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
             ]),
           ),
         ),
-        if (_hasAudio())
-          const SliverToBoxAdapter(child: SizedBox(height: 84)),
+        if (_hasAudio()) const SliverToBoxAdapter(child: SizedBox(height: 84)),
       ],
     );
   }
@@ -334,8 +334,7 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
               ),
             ),
             Spacer(),
-            if (_hasAudio())
-              const AudioChip(),
+            if (_hasAudio()) const AudioChip(),
           ],
         ),
       ],
@@ -378,8 +377,6 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
   List<dynamic> _parseHtmlBody(String htmlBody) {
     return HtmlUtils.parseArticleBlocks(htmlBody);
   }
-
-  
 
   Widget _buildFormattedText(
     List<Map<String, dynamic>> textParts,
@@ -594,8 +591,6 @@ class NewsDetailState extends ConsumerState<NewsDetail> {
       ],
     );
   }
-
-  // FAB replaced by persistent mini-player in bottomNavigationBar.
 
   void _disposeTapRecognizers() {
     for (final r in _tapRecognizers) {

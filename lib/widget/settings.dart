@@ -8,6 +8,7 @@ import 'package:shinpo/providers/cache_manager_provider.dart';
 import 'package:shinpo/providers/font_size_provider.dart';
 import 'package:shinpo/providers/furigana_provider.dart';
 import 'package:shinpo/widget/reading_history_screen.dart';
+import 'package:shinpo/util/navigation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Settings extends ConsumerStatefulWidget {
@@ -132,7 +133,7 @@ class _SettingsState extends ConsumerState<Settings> {
                     subtitle: 'View your reading progress',
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(
+                        platformPageRoute(
                           builder: (context) => const ReadingHistoryScreen(),
                         ),
                       );

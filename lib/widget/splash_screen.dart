@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shinpo/providers/cache_manager_provider.dart';
 import 'package:shinpo/widget/news_list.dart';
+import 'package:shinpo/util/navigation.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   @override
@@ -72,7 +73,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 if (_optimizationComplete) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => NewsList()),
+                      platformPageRoute(builder: (context) => NewsList()),
                     );
                   });
                 }
@@ -93,7 +94,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 if (_optimizationComplete) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => NewsList()),
+                      platformPageRoute(builder: (context) => NewsList()),
                     );
                   });
                 }
@@ -113,7 +114,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                       ElevatedButton(
                         onPressed: () {
                           Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (context) => NewsList()),
+                            platformPageRoute(builder: (context) => NewsList()),
                           );
                         },
                         child: Text('Continue'),

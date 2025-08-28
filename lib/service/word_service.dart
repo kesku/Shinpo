@@ -11,28 +11,29 @@ import 'package:shinpo/repository/word_repository.dart';
 class WordService {
   final _repo = WordRepository();
 
-  Future<List<Word>> fetchWordList(String newsId, {bool forceRefresh = false}) async {
+  Future<List<Word>> fetchWordList(String newsId,
+      {bool forceRefresh = false}) async {
     if (!forceRefresh) {
       try {
         final cached = await _repo.getWords(newsId);
         if (cached.isNotEmpty) {
           return cached;
         }
-      } catch (_) {
-        // Fall through to network fetch on cache errors
-      }
+      } catch (_) {}
     }
 
     final uri = ApiConfig.wordsUri(newsId);
     try {
-      final response = await HttpService.get(uri, timeout: const Duration(seconds: 10));
+      final response =
+          await HttpService.get(uri, timeout: const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final decoder = Utf8Decoder();
-        final wordList = List.of(json.decode(decoder.convert(response.bodyBytes)))
-            .map((news) => Word.fromJson(news))
-            .toList();
-        // Cache per newsId
+        final wordList =
+            List.of(json.decode(decoder.convert(response.bodyBytes)))
+                .map((news) => Word.fromJson(news))
+                .toList();
+
         try {
           await _repo.saveWords(newsId, wordList);
         } catch (_) {}
@@ -41,14 +42,15 @@ class WordService {
         throw Exception('Failed to fetch words: HTTP ${response.statusCode}');
       }
     } on SocketException catch (_) {
-      // On network failure, try cache as fallback
       final cached = await _repo.getWords(newsId);
       if (cached.isNotEmpty) return cached;
-      throw Exception('Network connection failed. Please check your internet connection.');
+      throw Exception(
+          'Network connection failed. Please check your internet connection.');
     } on TimeoutException catch (_) {
       final cached = await _repo.getWords(newsId);
       if (cached.isNotEmpty) return cached;
-      throw Exception('Network connection failed. Please check your internet connection.');
+      throw Exception(
+          'Network connection failed. Please check your internet connection.');
     } on http.ClientException catch (e) {
       throw Exception('Request error: ${e.message}');
     }

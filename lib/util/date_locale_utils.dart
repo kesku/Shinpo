@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Locale-aware date/time helpers used across list and detail screens.
 class DateLocaleUtils {
   static String formatAbsolute(BuildContext context, DateTime dateTime) {
     final locale = Localizations.maybeLocaleOf(context)?.toString();

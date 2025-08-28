@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:shinpo/error_reporter.dart';
 import 'package:shinpo/model/app_config.dart';
 import 'package:shinpo/providers/theme_provider.dart';
 import 'package:shinpo/widget/splash_screen.dart';
+import 'dart:io' show Platform;
 
 main() async {
   runZonedGuarded(
@@ -58,6 +60,86 @@ class NhkNewsEasy extends ConsumerWidget {
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         final lightColorScheme = lightDynamic ?? _defaultLightColorScheme;
         final darkColorScheme = darkDynamic ?? _defaultDarkColorScheme;
+
+        final useCupertino = Platform.isIOS || Platform.isMacOS;
+
+        if (useCupertino) {
+          return CupertinoApp(
+            title: '新報',
+            debugShowCheckedModeBanner: false,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('ja'),
+            ],
+            theme: CupertinoThemeData(
+              brightness: () {
+                switch (themeMode) {
+                  case ThemeMode.light:
+                    return Brightness.light;
+                  case ThemeMode.dark:
+                    return Brightness.dark;
+                  case ThemeMode.system:
+                    return WidgetsBinding
+                        .instance.platformDispatcher.platformBrightness;
+                }
+              }(),
+              primaryColor: lightColorScheme.primary,
+            ),
+            builder: (context, child) {
+              final platformBrightness =
+                  MediaQuery.maybeOf(context)?.platformBrightness ??
+                      Brightness.light;
+              Brightness effectiveBrightness;
+              switch (themeMode) {
+                case ThemeMode.light:
+                  effectiveBrightness = Brightness.light;
+                  break;
+                case ThemeMode.dark:
+                  effectiveBrightness = Brightness.dark;
+                  break;
+                case ThemeMode.system:
+                  effectiveBrightness = platformBrightness;
+                  break;
+              }
+              final isDark = effectiveBrightness == Brightness.dark;
+              final materialTheme = ThemeData(
+                useMaterial3: false,
+                colorScheme: isDark ? darkColorScheme : lightColorScheme,
+                appBarTheme: AppBarTheme(
+                  elevation: 0,
+                  scrolledUnderElevation: 1,
+                  backgroundColor:
+                      (isDark ? darkColorScheme : lightColorScheme).surface,
+                  foregroundColor:
+                      (isDark ? darkColorScheme : lightColorScheme).onSurface,
+                  centerTitle: false,
+                ),
+                cardTheme: CardThemeData(
+                  elevation: 0.5,
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                listTileTheme: ListTileThemeData(
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              );
+              return Theme(
+                  data: materialTheme, child: child ?? SizedBox.shrink());
+            },
+            home: SplashScreen(),
+          );
+        }
 
         return MaterialApp(
           title: '新報',

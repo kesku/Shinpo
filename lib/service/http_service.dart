@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:http/http.dart' as http;
 
-/// Shared HTTP client with convenience helpers and timeouts.
 class HttpService {
   HttpService._();
 
@@ -27,4 +26,3 @@ class HttpService {
     client.close();
   }
 }
-
