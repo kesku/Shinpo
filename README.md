@@ -2,15 +2,13 @@
 
 <div align="center">
 
-**Unofficial Flutter client for NHK News Web Easy**  
+**Unofficial client for NHKやさしいことばニュース | NEWS WEB EASY**  
 
-<img src="./images/icon.png" alt="App Icon" width="60"/>
+<img src="./images/icon.png" alt="App Icon" width="90"/>
 
-[Features](#features) • [Screenshots](#screenshots) • [Privacy](#privacy) • [Contributing](#contributing)
+[Features](#features) • [Screenshots](#screenshots) • [Privacy](./privacy_policy.md) • [License](LICENSE)
 
 </div>
-
-
 
 ## Features
 
