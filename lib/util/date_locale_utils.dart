@@ -29,7 +29,6 @@ class DateLocaleUtils {
   }
 
   static String relativePlusAbsolute(BuildContext context, DateTime dateTime) {
-    return '${formatRelative(dateTime)} · ${formatAbsolute(context, dateTime)}';
+    return '${formatRelative(dateTime)}';
   }
 }
-
