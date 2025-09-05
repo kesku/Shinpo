@@ -15,18 +15,18 @@ final cacheManagerServiceProvider = Provider<CacheManagerService>((ref) {
 final cacheInitializationProvider = FutureProvider<List<News>>((ref) async {
   final manager = ref.read(cacheManagerServiceProvider);
 
-  final cached = await manager.loadAllCachedNews();
-  if (cached.isNotEmpty) {
-    ref.read(offlineModeProvider.notifier).state = false;
-    return cached;
-  }
-
   try {
     final news = await manager.refreshCache();
     ref.read(offlineModeProvider.notifier).state = false;
     return news;
   } catch (e) {
     ref.read(offlineModeProvider.notifier).state = true;
+
+    final cached = await manager.loadAllCachedNews();
+    if (cached.isNotEmpty) {
+      return cached;
+    }
+
     return [];
   }
 });
@@ -35,13 +35,13 @@ final offlineModeProvider = StateProvider<bool>((ref) => false);
 
 final cachedNewsProvider =
     StateNotifierProvider<CachedNewsNotifier, AsyncValue<List<News>>>((ref) {
-      final manager = ref.read(cacheManagerServiceProvider);
-      return CachedNewsNotifier(manager, ref);
-    });
+  final manager = ref.read(cacheManagerServiceProvider);
+  return CachedNewsNotifier(manager, ref);
+});
 
 class CachedNewsNotifier extends StateNotifier<AsyncValue<List<News>>> {
   CachedNewsNotifier(this._manager, this._ref)
-    : super(const AsyncValue.loading());
+      : super(const AsyncValue.loading());
 
   final CacheManagerService _manager;
   final Ref _ref;
@@ -64,30 +64,26 @@ class CachedNewsNotifier extends StateNotifier<AsyncValue<List<News>>> {
       state = AsyncValue.data(news);
     } catch (e, st) {
       ErrorReporter.reportError(e, st);
-      
-      
+
       final errorString = e.toString();
-      if (errorString.contains('Network connection failed') || 
+      if (errorString.contains('Network connection failed') ||
           errorString.contains('SocketException') ||
           errorString.contains('TimeoutException')) {
         _ref.read(offlineModeProvider.notifier).state = true;
       } else {
-        
         _ref.read(offlineModeProvider.notifier).state = false;
       }
-      
-      
+
       try {
         final cached = await _manager.loadAllCachedNews();
         if (cached.isNotEmpty) {
           state = AsyncValue.data(cached);
         } else {
-          
           state = AsyncValue.error(e, st);
         }
       } catch (fallbackError, fallbackStack) {
         ErrorReporter.reportError(fallbackError, fallbackStack);
-        
+
         state = AsyncValue.error(e, st);
       }
     }
@@ -107,7 +103,7 @@ class CachedNewsNotifier extends StateNotifier<AsyncValue<List<News>>> {
   Future<void> optimizeCache() async {
     try {
       await _manager.optimizeCache();
-      
+
       await loadAllCachedNews();
     } catch (e, st) {
       ErrorReporter.reportError(e, st);
@@ -140,10 +136,9 @@ final cacheStatusProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final connectivityStatus = await ConnectivityService.getConnectivityStatus();
   final hasInternet = connectivityStatus['hasInternet'] ?? false;
   final nhkServerReachable = connectivityStatus['nhkServerReachable'] ?? false;
-  
+
   final initialized = articleCount > 0 || lastUpdate != null;
 
-  
   final cacheStats = await cacheManager.getCacheStats();
 
   return {
@@ -159,7 +154,6 @@ final cacheStatusProvider = FutureProvider<Map<String, dynamic>>((ref) async {
     'ageInDays': cacheStats['ageInDays'],
   };
 });
-
 
 final cacheStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final cacheManager = ref.read(cacheManagerServiceProvider);

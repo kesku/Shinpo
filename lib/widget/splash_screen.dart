@@ -19,11 +19,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> _performCacheOptimization() async {
     try {
-      
       final cacheManager = ref.read(cacheManagerServiceProvider);
       await cacheManager.optimizeCache();
     } catch (e) {
-      
       print('Cache optimization failed: $e');
     } finally {
       if (mounted) {
@@ -78,14 +76,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 }
                 return _buildLoadingContent(
                   context,
-                  _optimizationComplete ? 'Loading complete!' : 'Optimizing cache...',
+                  _optimizationComplete
+                      ? 'Fresh content loaded!'
+                      : 'Optimizing cache...',
                   _optimizationComplete ? Icons.check_circle_outline : null,
                   _optimizationComplete ? Colors.green : null,
                 );
               },
               loading: () => _buildLoadingContent(
                 context,
-                _optimizationComplete ? 'Loading news articles...' : 'Optimizing cache...',
+                _optimizationComplete
+                    ? 'Fetching latest news...'
+                    : 'Optimizing cache...',
                 null,
                 null,
               ),
@@ -101,12 +103,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   children: [
                     _buildLoadingContent(
                       context,
-                      _optimizationComplete ? 'Loading from cache...' : 'Optimizing cache...',
+                      _optimizationComplete
+                          ? 'Using cached content...'
+                          : 'Optimizing cache...',
                       _optimizationComplete ? Icons.cloud_off_outlined : null,
                       _optimizationComplete ? Colors.orange : null,
                     ),
                     SizedBox(height: 16),
-                    if (_optimizationComplete && isOffline) 
+                    if (_optimizationComplete && isOffline)
                       _buildOfflineIndicator(context),
                     SizedBox(height: 16),
                     if (_optimizationComplete)
@@ -123,7 +127,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               },
             ),
             SizedBox(height: 24),
-            if (_optimizationComplete && isOffline) 
+            if (_optimizationComplete && isOffline)
               _buildOfflineIndicator(context),
           ],
         ),
